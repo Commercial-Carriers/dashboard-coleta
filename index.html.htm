@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Volume Coleta - Postos Avançados</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f2f4f7; display: flex; min-height: 100vh; font-size: 13px; color: #1a1a1a; }
+
+  .sidebar { width: 240px; background: white; border-right: 1px solid #e3e6ea; padding: 18px 14px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; color: #1a2d5c; margin-bottom: 18px; }
+  .nav-title { font-size: 9px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #555; cursor: pointer; margin-bottom: 2px; transition: background .15s; }
+  .nav-item.active { background: #eaf0ff; color: #0055cc; font-weight: 600; }
+
+  .filters-block { margin-top: 22px; }
+  .filter-section-title { font-size: 9px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .filter-label { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
+  input[type="date"] { width: 100%; padding: 7px 9px; border: 1px solid #ddd; border-radius: 5px; font-size: 11px; margin-bottom: 12px; font-family: inherit; }
+  input[type="date"]:focus { outline: none; border-color: #0055cc; }
+
+  .filter-dropdown { position: relative; margin-bottom: 12px; }
+  .dropdown-toggle { width: 100%; padding: 7px 9px; border: 1px solid #ddd; border-radius: 5px; background: white; cursor: pointer; font-size: 11px; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .dropdown-toggle:hover { border-color: #999; }
+  .dropdown-toggle span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dropdown-menu { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; z-index: 200; box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+  .dropdown-search { width: 100%; padding: 8px 9px; border: none; border-bottom: 1px solid #eee; font-size: 11px; }
+  .dropdown-search:focus { outline: none; }
+  .dropdown-options { max-height: 200px; overflow-y: auto; }
+  .dropdown-item { padding: 6px 9px; font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .dropdown-item:hover { background: #f5f5f5; }
+  .dropdown-item input { cursor: pointer; }
+  .dropdown-actions { display: flex; gap: 6px; padding: 6px 9px; border-top: 1px solid #eee; }
+  .dropdown-actions button { flex: 1; padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; background: white; font-size: 10px; cursor: pointer; }
+  .dropdown-actions button:hover { background: #f5f5f5; }
+
+  .sidebar-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid #eee; font-size: 10px; color: #999; line-height: 1.6; }
+  .sidebar-footer b { color: #555; }
+  .data-badge { display: inline-flex; align-items: center; gap: 5px; background: #eef2f8; color: #1a2d5c; font-size: 9.5px; font-weight: 700; padding: 4px 9px; border-radius: 20px; margin-top: 8px; }
+  .query-details { margin-top: 8px; }
+  .query-details summary { cursor: pointer; font-size: 10px; color: #0055cc; font-weight: 600; list-style: none; }
+  .query-details summary::-webkit-details-marker { display: none; }
+  .query-details summary::before { content: '▸ '; }
+  .query-details[open] summary::before { content: '▾ '; }
+  .query-details pre { margin-top: 6px; background: #f5f7fa; border: 1px solid #eee; border-radius: 6px; padding: 8px; font-size: 9px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: #444; max-height: 220px; overflow-y: auto; }
+
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar { display: flex; justify-content: flex-end; padding: 10px 24px; }
+  .badge-homolog { background: #fff3cd; color: #8a6300; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 20px; letter-spacing: .5px; }
+
+  .container { flex: 1; overflow: auto; padding: 0 24px 24px; }
+
+  .header-banner { background: linear-gradient(135deg, #1a2d5c 0%, #23407a 100%); border-radius: 10px; padding: 16px 24px; margin-bottom: 18px; color: white; }
+  .header-title { font-size: 19px; font-weight: 700; }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .card { background: white; padding: 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border-left: 4px solid #0055cc; transition: transform .15s ease, box-shadow .15s ease; }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+  .card:nth-child(1) { border-left-color: #ff6b35; } .card:nth-child(1) .card-value { color: #ff6b35; }
+  .card:nth-child(2) { border-left-color: #0055cc; } .card:nth-child(2) .card-value { color: #0055cc; }
+  .card:nth-child(3) { border-left-color: #ffa500; } .card:nth-child(3) .card-value { color: #ffa500; }
+  .card:nth-child(4) { border-left-color: #00a86b; } .card:nth-child(4) .card-value { color: #00a86b; }
+  .card-label { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; margin-bottom: 6px; }
+  .card-value { font-size: 24px; font-weight: 700; }
+  .card-sub { font-size: 10px; color: #999; margin-top: 2px; }
+
+  .section { background: white; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; }
+  .section-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #eee; }
+  .section-title { font-size: 13px; font-weight: 700; color: #1a2d5c; }
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn { border: 1px solid #ddd; background: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s; }
+  .btn:hover { background: #f2f4f7; }
+
+  .legend { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 10.5px; color: #555; background: #fafbfc; border-bottom: 1px solid #eee; }
+  .legend-bar { flex: 0 0 220px; height: 12px; border-radius: 6px; background: linear-gradient(to right, #10b981, #34d399, #d4c14a, #f97316, #ef4444, #991b1b); }
+
+  .table-wrapper { overflow-x: auto; padding: 0 16px 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { padding: 9px 8px; text-align: center; font-weight: 700; font-size: 10.5px; color: #1a2d5c; background: #f9fafb; border: 1px solid #edf0f3; user-select: none; }
+  th.sortable { cursor: pointer; }
+  th.sortable:hover { background: #eef2f8; }
+  th.sortable::after { content: ' ⇅'; opacity: .35; font-size: 9px; }
+  th.sortable.asc::after { content: ' ↑'; opacity: 1; color: #0055cc; }
+  th.sortable.desc::after { content: ' ↓'; opacity: 1; color: #0055cc; }
+  th:first-child { text-align: left; padding-left: 12px; }
+  td { padding: 9px 8px; font-size: 12px; border: 1px solid #edf0f3; text-align: center; }
+  td.origin-cell { text-align: left; padding-left: 12px; }
+  td.origin-cell .origin-code { font-weight: 700; color: #1a2d5c; display: block; }
+  td.origin-cell .origin-name { font-weight: 400; color: #999; font-size: 10.5px; }
+  tr.total-row { background: #f0f2f5; font-weight: 700; border-top: 2px solid #1a2d5c; }
+  tr.total-row td.origin-cell .origin-code { color: #1a2d5c; }
+
+  .cell-color { border-radius: 4px; padding: 4px 7px; color: white; font-weight: 600; display: inline-block; min-width: 40px; font-size: 10.5px; }
+  .c-1 { background: #10b981; } .c-2 { background: #34d399; } .c-3 { background: #d4c14a; color: #333; }
+  .c-4 { background: #f97316; } .c-5 { background: #ef4444; } .c-6 { background: #991b1b; }
+  .c-empty { color: #ccc; }
+
+  input[type="text"].prod-input { width: 100%; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 10px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,25,40,0.45); z-index: 999; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 460px; width: 92%; max-height: 80vh; overflow-y: auto; position: relative; }
+  .modal-close { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; color: #999; background: #f5f5f5; width: 26px; height: 26px; border-radius: 50%; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; }
+  .modal-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: #1a2d5c; }
+  .modal-subtitle { font-size: 11px; color: #999; margin-bottom: 14px; }
+  .modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+  .modal-card { background: linear-gradient(135deg, #ff6b35 0%, #ff8555 100%); padding: 10px; border-radius: 6px; text-align: center; color: white; }
+  .modal-card:nth-child(2) { background: linear-gradient(135deg, #0055cc 0%, #0077ff 100%); }
+  .modal-card:nth-child(3) { background: linear-gradient(135deg, #ffa500 0%, #ffb84d 100%); }
+  .modal-card:nth-child(4) { background: linear-gradient(135deg, #00a86b 0%, #2ecc71 100%); }
+  .modal-label { font-size: 9px; font-weight: 700; opacity: 0.9; margin-bottom: 3px; }
+  .modal-value { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+  .modal-origin { font-size: 10px; font-weight: 600; }
+
+  .footer-explanation { padding: 14px 16px; background: #fafbfc; border-top: 1px solid #eee; font-size: 10.5px; color: #888; line-height: 1.6; }
+
+  /* Visitor badge */
+  .topbar { position: relative; }
+  .visitor-badge { display:flex; align-items:center; gap:6px; background: linear-gradient(135deg,#eef2f8,#dce8ff); color:#1a2d5c; font-size:11px; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; box-shadow:0 2px 6px rgba(0,85,204,0.15); transition:transform .15s; }
+  .visitor-badge:hover { transform: translateY(-1px); box-shadow:0 4px 10px rgba(0,85,204,0.25); }
+  .visitor-panel { display:none; position:absolute; top:38px; right:24px; width:260px; background:white; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.18); border:1px solid #eee; z-index:300; padding:12px; }
+  .visitor-panel.open { display:block; }
+  .visitor-panel h4 { font-size:11px; color:#1a2d5c; margin-bottom:8px; }
+  .visitor-panel .visitor-item { font-size:11px; color:#555; padding:5px 0; border-bottom:1px solid #f2f2f2; display:flex; justify-content:space-between; }
+  .visitor-panel .visitor-empty { font-size:11px; color:#999; padding:6px 0; }
+  .visitor-register { display:flex; gap:6px; margin-top:8px; }
+  .visitor-register input { flex:1; padding:6px 8px; border:1px solid #ddd; border-radius:5px; font-size:11px; }
+  .visitor-register button { border:none; background:#0055cc; color:white; border-radius:5px; padding:6px 10px; font-size:11px; cursor:pointer; }
+
+  /* Cards com mais vida */
+  .cards-grid .card { background: linear-gradient(160deg, #ffffff 0%, #f7f9ff 100%); position:relative; overflow:hidden; }
+  .card-emoji { font-size:13px; margin-right:4px; }
+
+  /* Holiday alert */
+  .holiday-alert { display:flex; align-items:center; gap:10px; background: linear-gradient(135deg,#fff3cd 0%, #ffe6a8 100%); border:1px solid #f0c95c; color:#8a6300; padding:10px 16px; border-radius:10px; margin-bottom:14px; font-size:12px; font-weight:600; box-shadow:0 2px 8px rgba(240,201,92,0.25); }
+  .holiday-alert button { margin-left:auto; border:none; background:#8a6300; color:white; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .holiday-flag { display:inline-flex; align-items:center; justify-content:center; font-size:10px; margin-left:3px; cursor:pointer; }
+
+  .plan-list { margin-top:10px; padding-left:0; list-style:none; }
+  .plan-list li { font-size:11.5px; color:#444; padding:7px 0 7px 24px; position:relative; border-bottom:1px solid #f2f2f2; line-height:1.5; }
+  .plan-list li::before { content:'💡'; position:absolute; left:0; top:6px; }
+
+  /* Origin detail overlay */
+  .origin-overlay { display:none; position:fixed; inset:0; background:rgba(20,25,40,0.5); z-index:998; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; }
+  .origin-overlay.open { display:flex; }
+  .origin-panel { background:white; border-radius:12px; padding:20px 24px; width:100%; max-width:720px; box-shadow:0 24px 60px rgba(0,0,0,0.3); position:relative; }
+  .origin-panel-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+  .origin-panel-title { font-size:16px; font-weight:700; color:#1a2d5c; }
+  .origin-panel-sub { font-size:11px; color:#999; margin-top:2px; }
+  .carrier-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .carrier-bar-label { width:100px; font-size:11px; font-weight:600; color:#444; flex-shrink:0; }
+  .carrier-bar-track { flex:1; background:#f0f2f5; border-radius:6px; height:16px; overflow:hidden; }
+  .carrier-bar-fill { height:100%; border-radius:6px; background: linear-gradient(90deg,#0055cc,#4d94ff); }
+  .carrier-bar-val { width:90px; text-align:right; font-size:11px; font-weight:700; color:#1a2d5c; }
+  .fleet-box { background: linear-gradient(135deg,#f7f9ff,#eef2f8); border-radius:10px; padding:14px; margin-top:16px; }
+  .fleet-summary { font-size:12px; color:#333; line-height:1.6; margin-bottom:10px; }
+  .fleet-diagrams { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+  .fleet-diagram-label { font-size:10.5px; font-weight:700; color:#1a2d5c; text-align:center; margin-top:4px; }
+
+  .btn-email { background: linear-gradient(135deg,#00a86b,#2ecc71); color:white; border:none; }
+  .btn-email:hover { filter:brightness(1.05); }
+
+  .dev-annot { font-size:9px; color:#0055cc; font-weight:700; margin-top:2px; line-height:1.2; }
+  .deviation-input { width:100%; padding:7px 9px; border:1px solid #ddd; border-radius:5px; font-size:11px; margin-bottom:4px; font-family:inherit; }
+  .deviation-input:focus { outline:none; border-color:#0055cc; }
+  .deviation-hint { font-size:9.5px; color:#999; margin-bottom:12px; line-height:1.4; }
+
+  .turno-badge { display:inline-block; padding:3px 9px; border-radius:12px; font-size:10.5px; font-weight:700; }
+  .turno-ok { background:#e6f7ee; color:#00a86b; }
+  .turno-he { background:#fff3cd; color:#8a6300; }
+  .turno-over { background:#fde8e8; color:#c0392b; }
+
+  td.origin-cell .origin-code { cursor:pointer; }
+  td.origin-cell .origin-code:hover { text-decoration: underline; color:#0055cc; }
+</style>
+<script>(function(){function _ok(r,onOk){return r.json().then(function(b){if(!r.ok)throw b;onOk(b);return b;});}window.GRID=window.GRID||{};window.GRID.docId="01KX1Q4HQBQSPF8ZYV59S7K3EJ";window.GRID._stateUpdatedAt='';window.GRID._stateUpdatedAtByName=window.GRID._stateUpdatedAtByName||{};window.GRID.states={get:function(name){var n=String(name||'').trim();if(!n)return Promise.reject({error:'validation_error',detail:'state name is required'});return fetch('/api/v1/documents/'+"01KX1Q4HQBQSPF8ZYV59S7K3EJ"+'/states/'+encodeURIComponent(n)).then(function(r){return _ok(r,function(b){window.GRID._stateUpdatedAtByName[n]=b.updated_at||'';});});},set:function(name,data,ifUpdatedAt){var n=String(name||'').trim();if(!n)return Promise.reject({error:'validation_error',detail:'state name is required'});return fetch('/api/v1/documents/'+"01KX1Q4HQBQSPF8ZYV59S7K3EJ"+'/states/'+encodeURIComponent(n),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:data,if_updated_at:(typeof ifUpdatedAt==='string'?ifUpdatedAt:(window.GRID._stateUpdatedAtByName[n]||''))})}).then(function(r){return _ok(r,function(b){window.GRID._stateUpdatedAtByName[n]=b.updated_at||'';});});},patch:function(name,patchData,ifUpdatedAt){var n=String(name||'').trim();if(!n)return Promise.reject({error:'validation_error',detail:'state name is required'});return fetch('/api/v1/documents/'+"01KX1Q4HQBQSPF8ZYV59S7K3EJ"+'/states/'+encodeURIComponent(n),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({patch:patchData,if_updated_at:(typeof ifUpdatedAt==='string'?ifUpdatedAt:(window.GRID._stateUpdatedAtByName[n]||''))})}).then(function(r){return _ok(r,function(b){window.GRID._stateUpdatedAtByName[n]=b.updated_at||'';});});}};window.GRID.state={get:function(){return fetch('/api/v1/documents/'+"01KX1Q4HQBQSPF8ZYV59S7K3EJ"+'/state').then(function(r){return _ok(r,function(b){window.GRID._stateUpdatedAt=b.updated_at||'';});});},set:function(data,ifUpdatedAt){return fetch('/api/v1/documents/'+"01KX1Q4HQBQSPF8ZYV59S7K3EJ"+'/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:data,if_updated_at:(typeof ifUpdatedAt==='string'?ifUpdatedAt:(window.GRID._stateUpdatedAt||''))})}).then(function(r){return _ok(r,function(b){window.GRID._stateUpdatedAt=b.updated_at||'';});});},patch:function(patchData,ifUpdatedAt){return fetch('/api/v1/documents/'+"01KX1Q4HQBQSPF8ZYV59S7K3EJ"+'/state',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({patch:patchData,if_updated_at:(typeof ifUpdatedAt==='string'?ifUpdatedAt:(window.GRID._stateUpdatedAt||''))})}).then(function(r){return _ok(r,function(b){window.GRID._stateUpdatedAt=b.updated_at||'';});});}};}());</script></head>
+<body>
+  <div class="sidebar">
+    <div class="brand">📦 Dashboard Coleta</div>
+    <div class="nav-title">Navegação</div>
+    <div class="nav-item active">🔥 Detalhes por Volume</div>
+
+    <div class="filters-block">
+      <div class="filter-section-title">Filtros Globais</div>
+      <label class="filter-label">De</label>
+      <input type="date" id="dateStart" onchange="applyFilters()">
+      <label class="filter-label">Até</label>
+      <input type="date" id="dateEnd" onchange="applyFilters()">
+
+      <label class="filter-label">📈 Desvio de Volume (%)</label>
+      <input type="text" class="deviation-input" id="volumeDeviationPct" inputmode="numeric" placeholder="ex: 10" oninput="onDeviationChange(this.value)">
+      <div class="deviation-hint">Simula um acréscimo % sobre o volume. Preenchido: Média/Pico/MOD/Turnos passam a considerar o valor ajustado (mostrado entre parênteses). Vazio: usa o volume original. As cores do heatmap não mudam.</div>
+
+      <label class="filter-label">Transportadora</label>
+      <div class="filter-dropdown">
+        <div class="dropdown-toggle" onclick="toggleDropdown('carrier')">
+          <span id="carrierLabel">Todas</span><span>▼</span>
+        </div>
+        <div class="dropdown-menu" id="carrierMenu" style="display:none;">
+          <input type="text" class="dropdown-search" placeholder="Buscar transportadora..." oninput="filterDropdownOptions('carrier', this.value)">
+          <div class="dropdown-options" id="carrierOptionsList"></div>
+          <div class="dropdown-actions">
+            <button onclick="selectAllFilter('carrier')">Selecionar tudo</button>
+            <button onclick="clearFilterSel('carrier')">Limpar</button>
+          </div>
+        </div>
+      </div>
+
+      <label class="filter-label">Origem</label>
+      <div class="filter-dropdown">
+        <div class="dropdown-toggle" onclick="toggleDropdown('origin')">
+          <span id="originLabel">Todas</span><span>▼</span>
+        </div>
+        <div class="dropdown-menu" id="originMenu" style="display:none;">
+          <input type="text" class="dropdown-search" placeholder="Buscar origem..." oninput="filterDropdownOptions('origin', this.value)">
+          <div class="dropdown-options" id="originOptionsList"></div>
+          <div class="dropdown-actions">
+            <button onclick="selectAllFilter('origin')">Selecionar tudo</button>
+            <button onclick="clearFilterSel('origin')">Limpar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div><b>Criado por:</b> Cris Menezes</div>
+      <div><b>Página carregada em:</b> <span id="lastLoad"></span></div>
+      <div><b>Dados até:</b> <span id="dataUntil"></span></div>
+      <div class="data-badge" id="dataSourceBadge">📊 Dados: BigQuery</div>
+      <details class="query-details">
+        <summary>Ver query usada</summary>
+        <pre>SELECT
+  CASE WHEN SHP_STEP_ORIGIN_ID IN (
+    'BRXSP9','ARENA','BRXSP10','BRSP14','XMG1','CAMPINAS',
+    'BRSP02','BRSP04','BRXGO1','XSP4','BRXSP5','BRBA01','BRBA02'
+  ) THEN SHP_STEP_ORIGIN_ID ELSE 'Outras' END AS facility,
+  DATE_CPT AS data,
+  CASE
+    WHEN SHP_SERVICE_ID IN (3966010,3022162,966283) THEN 'J&amp;T'
+    WHEN SHP_SERVICE_ID = 135551 THEN 'Loggi'
+    WHEN SHP_SERVICE_ID IN (263,264) THEN 'Jad'
+    WHEN SHP_SERVICE_ID = 251165 THEN 'Carvalima'
+    WHEN SHP_SERVICE_ID = 4692270 THEN 'iMile Slow'
+    WHEN SHP_SERVICE_ID = 4675820 THEN 'iMile Fast'
+    WHEN SHP_SERVICE_ID = 4732666 THEN 'Dominalog'
+    WHEN SHP_SERVICE_ID = 157861 THEN 'iMile'
+    ELSE 'Outros'
+  END AS carrier,
+  COUNT(DISTINCT SHP_SHIPMENT_ID) AS volume
+FROM `meli-bi-data.SBOX_MLBCOMCARRIERS.Artefato_previsao_coleta`
+WHERE DATE_CPT BETWEEN
+  DATE_SUB(CURRENT_DATE(), INTERVAL 28 DAY)
+  AND DATE_ADD(CURRENT_DATE(), INTERVAL 10 DAY)
+GROUP BY 1, 2, 3
+ORDER BY data, facility, carrier</pre>
+      </details>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="visitor-badge" id="visitorBadge" onclick="toggleVisitorPanel()" title="Contagem automática de aberturas do link">🧑 <span id="visitorCount">—</span> acessos</div>
+      <div class="visitor-panel" id="visitorPanel">
+        <h4>👀 Quem se identificou (opcional)</h4>
+        <div id="visitorList"></div>
+        <div class="visitor-register">
+          <input type="text" id="visitorNameInput" placeholder="Seu nome (opcional, só p/ aparecer na lista)">
+          <button onclick="registerVisit()">Registrar</button>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="header-banner">
+        <div class="header-title">📦 Volume por Origem</div>
+      </div>
+
+      <div id="holidayAlertBox"></div>
+
+      <div class="cards-grid" id="cardsGrid"></div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Heatmap de Volume</div>
+          <div class="toolbar">
+            <button class="btn" onclick="exportCSV()">⬇ CSV</button>
+            <button class="btn btn-email" onclick="sendSummaryEmail()">📧 Enviar resumo</button>
+          </div>
+        </div>
+        <div class="legend">
+          <span>Menor Volume</span>
+          <div class="legend-bar"></div>
+          <span>Maior Volume</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="heatmapTable"></table>
+        </div>
+      </div>
+
+      <div class="footer-explanation">
+        <strong>Cálculo MOD:</strong> MOD (Média) = Média Diária ÷ Produtividade/Turno · MOD (Pico) = Dia Pico ÷ Produtividade/Turno.<br>
+        <strong>Turnos (Pico):</strong> Dia Pico ÷ Pcts/Turno, arredondado para cima. O campo de placeholder já sugere, a título de exemplo, o Pcts/Turno necessário para fechar em 3 turnos. Até 3 = turnos normais (verde) · 4 = 3 turnos + hora extra (amarelo) · acima de 4 = ⚠ fora da capacidade com a config atual de 3 turnos + 1 HE (vermelho).<br>
+        <strong>Desvio de Volume (%):</strong> campo nos Filtros Globais (sidebar) para simular uma folga/acréscimo percentual sobre o volume. Preenchido: o valor ajustado passa a ser usado nos cálculos de Média, Pico, MOD e Turnos, e aparece em azul entre parênteses embaixo de cada número (ex: "(+10%: 84.599)"). Vazio ou zerado: tudo volta a considerar o volume original de base. As cores do heatmap (farol) sempre refletem o volume original, independente do desvio configurado.<br>
+        Clique no cabeçalho de um dia (Seg...Sáb) para ordenar as origens por aquele dia. "Outras" agrega origens fora do acompanhamento individual, para o total geral bater com a fonte. Este arquivo pode rodar em modo "planilha viva": configure SHEET_CSV_URL no código com a URL publicada em CSV de uma planilha conectada ao BigQuery, e o dashboard passa a buscar os dados atualizados automaticamente a cada abertura.
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="picoModalOverlay">
+    <div class="modal">
+      <span class="modal-close" onclick="closePicoModal()">×</span>
+      <div class="modal-title" id="picoTitle"></div>
+      <div class="modal-subtitle" id="picoSubtitle"></div>
+      <div class="modal-grid" id="picoGrid"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="holidayModalOverlay">
+    <div class="modal" style="max-width:480px;">
+      <span class="modal-close" onclick="closeHolidayModal()">×</span>
+      <div class="modal-title">🎉 Feriados no período selecionado</div>
+      <div class="modal-subtitle" id="holidaySubtitle"></div>
+      <ul class="plan-list" id="holidayPlanList"></ul>
+    </div>
+  </div>
+
+  <div class="origin-overlay" id="originOverlay">
+    <div class="origin-panel">
+      <span class="modal-close" onclick="closeOriginDetail()">×</span>
+      <div class="origin-panel-header">
+        <div>
+          <div class="origin-panel-title" id="originPanelTitle"></div>
+          <div class="origin-panel-sub" id="originPanelSub"></div>
+        </div>
+      </div>
+      <div id="originCarrierBars"></div>
+      <div class="fleet-box">
+        <div class="fleet-summary" id="fleetSummary"></div>
+        <div class="fleet-diagrams" id="fleetDiagrams"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Dados reais BigQuery (meli-bi-data.SBOX_MLBCOMCARRIERS.Artefato_previsao_coleta)
+  // Validado contra Looker: BRXSP9=84.308 e total geral=231.535 em 08/07/2026
+  // Estrutura: cada origem tem uma LISTA de entradas {carrier, day} pois uma origem pode receber de varios carriers no mesmo dia
+const REAL_DATA_STATIC = {"2026-06-15":{"1246923179":[{"carrier":"J&T","day":1}],"1246930123":[{"carrier":"J&T","day":1}],"1247496192":[{"carrier":"Carvalima","day":1}],"1247498615":[{"carrier":"Carvalima","day":1}],"1247499008":[{"carrier":"Dominalog","day":1}],"1247501025":[{"carrier":"Carvalima","day":1}],"1302003936":[{"carrier":"J&T","day":1}],"1304440879":[{"carrier":"J&T","day":1}],"1352414411":[{"carrier":"J&T","day":1}],"1352415573":[{"carrier":"J&T","day":1}],"1352935598":[{"carrier":"J&T","day":1}],"1353707418":[{"carrier":"J&T","day":1}],"1353911098":[{"carrier":"J&T","day":1}],"1408246943":[{"carrier":"J&T","day":2}],"1414214976":[{"carrier":"J&T","day":1}],"1430049856":[{"carrier":"J&T","day":1}],"1438952026":[{"carrier":"J&T","day":1}],"1457387996":[{"carrier":"J&T","day":2}],"1479133805":[{"carrier":"J&T","day":1}],"1481880624":[{"carrier":"J&T","day":1}],"1482579973":[{"carrier":"J&T","day":1}],"1503271489":[{"carrier":"J&T","day":1}],"1508699059":[{"carrier":"J&T","day":1}],"1514463765":[{"carrier":"J&T","day":1}],"1515789648":[{"carrier":"J&T","day":1}],"1518629611":[{"carrier":"J&T","day":1}],"1525686420":[{"carrier":"J&T","day":1}],"1526392436":[{"carrier":"J&T","day":1}],"1550232982":[{"carrier":"J&T","day":1}],"1551905710":[{"carrier":"J&T","day":1}],"1556631046":[{"carrier":"J&T","day":1}],"1565692029":[{"carrier":"J&T","day":1}],"1565900074":[{"carrier":"J&T","day":1}],"1572443428":[{"carrier":"J&T","day":3}],"1575741955":[{"carrier":"Carvalima","day":1}],"1578046653":[{"carrier":"J&T","day":1}],"1582450167":[{"carrier":"J&T","day":1}],"1582450491":[{"carrier":"J&T","day":1}],"1582452943":[{"carrier":"J&T","day":2}],"1582453981":[{"carrier":"J&T","day":1}],"1582465251":[{"carrier":"J&T","day":1}],"1582465635":[{"carrier":"Carvalima","day":1}],"1582465713":[{"carrier":"Carvalima","day":1}],"1582563813":[{"carrier":"J&T","day":1}],"1583388270":[{"carrier":"J&T","day":2}],"1585854647":[{"carrier":"J&T","day":1}],"1587181026":[{"carrier":"J&T","day":2}],"1589791012":[{"carrier":"J&T","day":1}],"1590168716":[{"carrier":"Carvalima","day":1}],"1590631286":[{"carrier":"J&T","day":1}],"1590636292":[{"carrier":"J&T","day":1}],"1590744602":[{"carrier":"J&T","day":1}],"1590768640":[{"carrier":"J&T","day":1}],"1594667090":[{"carrier":"Carvalima","day":1}],"1594669008":[{"carrier":"J&T","day":1}],"1596182524":[{"carrier":"J&T","day":1}],"1596203380":[{"carrier":"Carvalima","day":1}],"1596209722":[{"carrier":"Carvalima","day":1}],"1596214248":[{"carrier":"J&T","day":1}],"1596214930":[{"carrier":"J&T","day":1}],"1596215116":[{"carrier":"J&T","day":1}],"1596216388":[{"carrier":"J&T","day":1}],"1596218178":[{"carrier":"J&T","day":1}],"1603011841":[{"carrier":"J&T","day":1}],"1603021609":[{"carrier":"J&T","day":1}],"1603037001":[{"carrier":"J&T","day":1}],"1603110023":[{"carrier":"J&T","day":2}],"1603828663":[{"carrier":"Carvalima","day":1}],"1604279341":[{"carrier":"J&T","day":1}],"1621454262":[{"carrier":"Loggi","day":1}],"1622160344":[{"carrier":"J&T","day":1}],"1622657070":[{"carrier":"J&T","day":1}],"849817033_107132252":[{"carrier":"Carvalima","day":1}],"849817033_117021299":[{"carrier":"J&T","day":1}],"849817033_12917":[{"carrier":"J&T","day":1}],"849817033_14949":[{"carrier":"J&T","day":1}],"849817033_15408":[{"carrier":"J&T","day":1}],"849817033_17272402":[{"carrier":"J&T","day":1}],"849817033_174018242":[{"carrier":"J&T","day":1}],"849817033_17665":[{"carrier":"J&T","day":1}],"849817033_18324":[{"carrier":"J&T","day":1}],"849817033_211043":[{"carrier":"J&T","day":1}],"849817033_216678115":[{"carrier":"Carvalima","day":1}],"849817033_219465496":[{"carrier":"Carvalima","day":1}],"849817033_22204":[{"carrier":"Carvalima","day":1}],"849817033_22407":[{"carrier":"J&T","day":1}],"849817033_224554975":[{"carrier":"J&T","day":1}],"849817033_22619":[{"carrier":"Carvalima","day":1}],"849817033_22764":[{"carrier":"Carvalima","day":1}],"849817033_22931":[{"carrier":"Carvalima","day":1}],"849817033_230260000":[{"carrier":"Carvalima","day":1}],"849817033_232686754":[{"carrier":"J&T","day":1}],"849817033_237523630":[{"carrier":"J&T","day":1}],"849817033_24076":[{"carrier":"J&T","day":1}],"849817033_24196":[{"carrier":"J&T","day":2}],"849817033_24374":[{"carrier":"J&T","day":1}],"849817033_245946":[{"carrier":"J&T","day":1}],"849817033_25896932":[{"carrier":"J&T","day":1}],"849817033_26577804":[{"carrier":"J&T","day":1}],"849817033_27751705":[{"carrier":"Carvalima","day":1}],"849817033_29373":[{"carrier":"Carvalima","day":1}],"849817033_30313":[{"carrier":"J&T","day":1}],"849817033_31120":[{"carrier":"J&T","day":1}],"849817033_31198924":[{"carrier":"Carvalima","day":1}],"849817033_31892746":[{"carrier":"Carvalima","day":1}],"849817033_3637691":[{"carrier":"Carvalima","day":1}],"849817033_37582273":[{"carrier":"J&T","day":1}],"849817033_380982":[{"carrier":"J&T","day":1}],"849817033_38631":[{"carrier":"J&T","day":1}],"849817033_40774":[{"carrier":"Carvalima","day":1}],"849817033_41426":[{"carrier":"Loggi","day":1}],"849817033_4773780":[{"carrier":"Carvalima","day":1}],"849817033_48424":[{"carrier":"J&T","day":1}],"849817033_60365":[{"carrier":"J&T","day":1}],"849817033_60432208":[{"carrier":"J&T","day":1}],"849817033_70307053":[{"carrier":"J&T","day":1}],"849817033_72690124":[{"carrier":"J&T","day":1}],"849817033_77491019":[{"carrier":"J&T","day":1}],"849817033_837818":[{"carrier":"J&T","day":1}],"849817033_87804856":[{"carrier":"J&T","day":1}],"849817033_9352068":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":4183},{"carrier":"Jad","day":1261},{"carrier":"Loggi","day":1407}],"BRASP1":[{"carrier":"J&T","day":1}],"BRBA01":[{"carrier":"J&T","day":220}],"BRBA02":[{"carrier":"J&T","day":12}],"BRSP02":[{"carrier":"J&T","day":6001}],"BRSP04":[{"carrier":"J&T","day":7123}],"BRSP06":[{"carrier":"J&T","day":1}],"BRSP14":[{"carrier":"J&T","day":7272}],"BRSP24":[{"carrier":"J&T","day":1}],"BRTR07":[{"carrier":"Jad","day":2}],"BRXGO1":[{"carrier":"J&T","day":1}],"BRXMG2":[{"carrier":"J&T","day":2}],"BRXMG3":[{"carrier":"J&T","day":2}],"BRXSP10":[{"carrier":"J&T","day":3075},{"carrier":"Loggi","day":905}],"BRXSP5":[{"carrier":"J&T","day":542}],"BRXSP9":[{"carrier":"Carvalima","day":13739},{"carrier":"Dominalog","day":3083},{"carrier":"J&T","day":199841},{"carrier":"Jad","day":9571},{"carrier":"Loggi","day":24668},{"carrier":"iMile Fast","day":5070},{"carrier":"iMile Slow","day":5113}],"CAMPINAS":[{"carrier":"J&T","day":217},{"carrier":"Jad","day":520},{"carrier":"Loggi","day":552}],"SBA2":[{"carrier":"J&T","day":219}],"SBA7":[{"carrier":"J&T","day":6}],"SGO2":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":8}],"XSP4":[{"carrier":"J&T","day":7811},{"carrier":"Jad","day":360},{"carrier":"Loggi","day":323}]},"2026-06-16":{"1012572670":[{"carrier":"Jad","day":1}],"1232635016":[{"carrier":"Loggi","day":1}],"1246930590":[{"carrier":"Loggi","day":1}],"1246938297":[{"carrier":"Loggi","day":1}],"1246939527":[{"carrier":"J&T","day":1}],"1247498500":[{"carrier":"Jad","day":1}],"1247500396":[{"carrier":"Loggi","day":1}],"1317905118":[{"carrier":"Loggi","day":1}],"1351665317":[{"carrier":"Loggi","day":1}],"1351667043":[{"carrier":"Jad","day":1}],"1351667303":[{"carrier":"Jad","day":1}],"1362583788":[{"carrier":"Jad","day":1}],"1447094539":[{"carrier":"Loggi","day":1}],"1513057799":[{"carrier":"Loggi","day":2}],"1529618376":[{"carrier":"Jad","day":1}],"1531178013":[{"carrier":"Loggi","day":1}],"1533814782":[{"carrier":"Loggi","day":1}],"1538412474":[{"carrier":"Jad","day":1}],"1538412740":[{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"1572481888":[{"carrier":"Loggi","day":1}],"1572804134":[{"carrier":"Loggi","day":1}],"1583472755":[{"carrier":"Jad","day":2}],"1590168716":[{"carrier":"Jad","day":1}],"1596180620":[{"carrier":"Jad","day":1}],"1596182864":[{"carrier":"Jad","day":1}],"1596209224":[{"carrier":"Jad","day":1}],"1596217796":[{"carrier":"Loggi","day":1}],"1596248422":[{"carrier":"Loggi","day":1}],"1603065811":[{"carrier":"J&T","day":1}],"1603099997":[{"carrier":"Jad","day":1}],"1603549665":[{"carrier":"Loggi","day":1}],"1603623351":[{"carrier":"Loggi","day":1}],"1622182990":[{"carrier":"Jad","day":1}],"849817033_100604":[{"carrier":"Loggi","day":1}],"849817033_116587343":[{"carrier":"Loggi","day":1}],"849817033_144769874":[{"carrier":"Loggi","day":1}],"849817033_14484":[{"carrier":"J&T","day":1}],"849817033_157276292":[{"carrier":"Jad","day":1}],"849817033_16000":[{"carrier":"Loggi","day":1}],"849817033_16390":[{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"849817033_1671872":[{"carrier":"Jad","day":1}],"849817033_174099557":[{"carrier":"J&T","day":1}],"849817033_198904126":[{"carrier":"Loggi","day":1}],"849817033_202335820":[{"carrier":"Jad","day":1}],"849817033_203914464":[{"carrier":"Loggi","day":1}],"849817033_206431669":[{"carrier":"Loggi","day":1}],"849817033_21090":[{"carrier":"Loggi","day":1}],"849817033_213945694":[{"carrier":"Jad","day":1}],"849817033_214781683":[{"carrier":"J&T","day":1}],"849817033_22194":[{"carrier":"Loggi","day":1}],"849817033_226588549":[{"carrier":"Jad","day":1}],"849817033_22715":[{"carrier":"Jad","day":1}],"849817033_22765":[{"carrier":"Loggi","day":1}],"849817033_23632":[{"carrier":"Loggi","day":1}],"849817033_254603611":[{"carrier":"Jad","day":1}],"849817033_27751705":[{"carrier":"Jad","day":1}],"849817033_29015":[{"carrier":"Loggi","day":1}],"849817033_29800":[{"carrier":"Loggi","day":1}],"849817033_29836":[{"carrier":"Loggi","day":1}],"849817033_29887480":[{"carrier":"Loggi","day":1}],"849817033_34277":[{"carrier":"Loggi","day":1}],"849817033_42269":[{"carrier":"Loggi","day":1}],"849817033_47089057":[{"carrier":"Carvalima","day":1}],"849817033_75890":[{"carrier":"Jad","day":1}],"849817033_87520282":[{"carrier":"Jad","day":1}],"849817033_94216177":[{"carrier":"Loggi","day":1}],"ARENA":[{"carrier":"J&T","day":12603},{"carrier":"Jad","day":1130},{"carrier":"Loggi","day":1890}],"BRBA01":[{"carrier":"J&T","day":5415}],"BRBA02":[{"carrier":"J&T","day":57}],"BRSP02":[{"carrier":"J&T","day":3894}],"BRSP04":[{"carrier":"J&T","day":2765}],"BRSP14":[{"carrier":"J&T","day":23471}],"BRTR07":[{"carrier":"Jad","day":10}],"BRXGO1":[{"carrier":"J&T","day":18256}],"BRXSP10":[{"carrier":"J&T","day":41045},{"carrier":"Loggi","day":2044}],"BRXSP14":[{"carrier":"J&T","day":1}],"BRXSP5":[{"carrier":"J&T","day":1447}],"BRXSP9":[{"carrier":"Carvalima","day":4574},{"carrier":"Dominalog","day":1546},{"carrier":"J&T","day":74454},{"carrier":"Jad","day":11322},{"carrier":"Loggi","day":21547},{"carrier":"iMile Fast","day":4081},{"carrier":"iMile Slow","day":3777}],"CAMPINAS":[{"carrier":"J&T","day":7251},{"carrier":"Jad","day":766},{"carrier":"Loggi","day":911}],"SMG2":[{"carrier":"J&T","day":1}],"SRJ2":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":19709}],"XSP4":[{"carrier":"J&T","day":800},{"carrier":"Jad","day":443},{"carrier":"Loggi","day":732}]},"2026-06-17":{null:[{"carrier":"Carvalima","day":2}],"1538411918":[{"carrier":"J&T","day":1}],"1563568831":[{"carrier":"J&T","day":1}],"1603634307":[{"carrier":"J&T","day":1}],"849817033_184980":[{"carrier":"J&T","day":1}],"849817033_188781913":[{"carrier":"J&T","day":1}],"849817033_25056":[{"carrier":"J&T","day":1}],"849817033_29276842":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":33911},{"carrier":"Jad","day":1056},{"carrier":"Loggi","day":1367}],"BRBA01":[{"carrier":"J&T","day":6622}],"BRBA02":[{"carrier":"J&T","day":94}],"BRSP02":[{"carrier":"J&T","day":3228}],"BRSP04":[{"carrier":"J&T","day":2155}],"BRSP14":[{"carrier":"J&T","day":51932}],"BRTR01":[{"carrier":"Loggi","day":2}],"BRTR07":[{"carrier":"Jad","day":9}],"BRTW01":[{"carrier":"Loggi","day":6}],"BRTW06":[{"carrier":"Jad","day":1}],"BRXGO1":[{"carrier":"J&T","day":3660}],"BRXSP10":[{"carrier":"J&T","day":27129},{"carrier":"Loggi","day":1225}],"BRXSP5":[{"carrier":"J&T","day":2463}],"BRXSP9":[{"carrier":"Carvalima","day":4245},{"carrier":"Dominalog","day":1626},{"carrier":"J&T","day":76119},{"carrier":"Jad","day":4588},{"carrier":"Loggi","day":10922},{"carrier":"iMile Fast","day":3230},{"carrier":"iMile Slow","day":5997}],"CAMPINAS":[{"carrier":"J&T","day":8806},{"carrier":"Jad","day":651},{"carrier":"Loggi","day":581}],"XMG1":[{"carrier":"J&T","day":6827}],"XSP4":[{"carrier":"J&T","day":6756},{"carrier":"Jad","day":431},{"carrier":"Loggi","day":1111}]},"2026-06-18":{null:[{"carrier":"Carvalima","day":1}],"1246938748":[{"carrier":"Carvalima","day":1}],"849817033_1452770":[{"carrier":"Jad","day":1}],"ARENA":[{"carrier":"J&T","day":57571},{"carrier":"Jad","day":796},{"carrier":"Loggi","day":1189}],"BRBA01":[{"carrier":"J&T","day":2166}],"BRBA02":[{"carrier":"J&T","day":77}],"BRSP02":[{"carrier":"J&T","day":2455}],"BRSP04":[{"carrier":"J&T","day":1676}],"BRSP14":[{"carrier":"J&T","day":37401}],"BRTR01":[{"carrier":"Loggi","day":1}],"BRTR07":[{"carrier":"Jad","day":17}],"BRTW01":[{"carrier":"Loggi","day":10}],"BRXGO1":[{"carrier":"J&T","day":7189}],"BRXSP10":[{"carrier":"J&T","day":52861},{"carrier":"Loggi","day":985}],"BRXSP5":[{"carrier":"J&T","day":3980}],"BRXSP9":[{"carrier":"Carvalima","day":3766},{"carrier":"Dominalog","day":1601},{"carrier":"J&T","day":86413},{"carrier":"Jad","day":6993},{"carrier":"Loggi","day":8200},{"carrier":"iMile Fast","day":3499},{"carrier":"iMile Slow","day":6403}],"CAMPINAS":[{"carrier":"J&T","day":15894},{"carrier":"Jad","day":403},{"carrier":"Loggi","day":483}],"SRD2":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":17127}],"XSP4":[{"carrier":"J&T","day":15013},{"carrier":"Jad","day":317},{"carrier":"Loggi","day":281}]},"2026-06-19":{null:[{"carrier":"Carvalima","day":3}],"1246928689":[{"carrier":"J&T","day":1}],"1354490149":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":46876},{"carrier":"Jad","day":764},{"carrier":"Loggi","day":1130}],"BRBA01":[{"carrier":"J&T","day":3932}],"BRBA02":[{"carrier":"J&T","day":35}],"BRSP02":[{"carrier":"J&T","day":19736}],"BRSP04":[{"carrier":"J&T","day":21803}],"BRSP14":[{"carrier":"J&T","day":24237}],"BRTR07":[{"carrier":"Jad","day":19}],"BRTW01":[{"carrier":"Loggi","day":10}],"BRXGO1":[{"carrier":"J&T","day":12686}],"BRXSP10":[{"carrier":"J&T","day":41003},{"carrier":"Loggi","day":901}],"BRXSP5":[{"carrier":"J&T","day":9281}],"BRXSP9":[{"carrier":"Carvalima","day":3889},{"carrier":"Dominalog","day":1679},{"carrier":"J&T","day":76646},{"carrier":"Jad","day":9209},{"carrier":"Loggi","day":10500},{"carrier":"iMile Fast","day":3319},{"carrier":"iMile Slow","day":3941}],"CAMPINAS":[{"carrier":"J&T","day":23201},{"carrier":"Jad","day":462},{"carrier":"Loggi","day":370}],"SRD2":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":22444}],"XSP4":[{"carrier":"J&T","day":11520},{"carrier":"Jad","day":270},{"carrier":"Loggi","day":251}]},"2026-06-20":{null:[{"carrier":"Loggi","day":1}],"1565040601":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":36622},{"carrier":"Jad","day":687},{"carrier":"Loggi","day":1048}],"BRBA01":[{"carrier":"J&T","day":1395}],"BRBA02":[{"carrier":"J&T","day":15}],"BRSP02":[{"carrier":"J&T","day":26731}],"BRSP04":[{"carrier":"J&T","day":8769}],"BRSP14":[{"carrier":"J&T","day":10036}],"BRTW01":[{"carrier":"Loggi","day":2}],"BRXGO1":[{"carrier":"J&T","day":10084}],"BRXPR4":[{"carrier":"J&T","day":1}],"BRXSP10":[{"carrier":"J&T","day":26568},{"carrier":"Loggi","day":714}],"BRXSP16":[{"carrier":"Dominalog","day":1}],"BRXSP5":[{"carrier":"J&T","day":24151}],"BRXSP9":[{"carrier":"Carvalima","day":3047},{"carrier":"Dominalog","day":531},{"carrier":"J&T","day":45615},{"carrier":"Jad","day":2897},{"carrier":"Loggi","day":4977},{"carrier":"iMile Fast","day":2383},{"carrier":"iMile Slow","day":2333}],"CAMPINAS":[{"carrier":"J&T","day":15609},{"carrier":"Jad","day":192},{"carrier":"Loggi","day":320}],"SBA7":[{"carrier":"J&T","day":196}],"SSP13":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":25481}],"XSP4":[{"carrier":"J&T","day":7722},{"carrier":"Jad","day":559},{"carrier":"Loggi","day":2356}]},"2026-06-21":{"BRXSP9":[{"carrier":"J&T","day":6}]},"2026-06-22":{"849817033_40556":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":2159}],"BRBA01":[{"carrier":"J&T","day":545}],"BRBA02":[{"carrier":"J&T","day":8}],"BRSP02":[{"carrier":"J&T","day":3497}],"BRSP04":[{"carrier":"J&T","day":1894}],"BRSP14":[{"carrier":"J&T","day":8154}],"BRTR07":[{"carrier":"Jad","day":2}],"BRTW01":[{"carrier":"Loggi","day":2}],"BRXSP10":[{"carrier":"J&T","day":3148}],"BRXSP5":[{"carrier":"J&T","day":460}],"BRXSP9":[{"carrier":"Carvalima","day":5353},{"carrier":"Dominalog","day":2182},{"carrier":"J&T","day":178291},{"carrier":"Jad","day":3272},{"carrier":"Loggi","day":7333},{"carrier":"iMile Fast","day":4517},{"carrier":"iMile Slow","day":5043}],"CAMPINAS":[{"carrier":"J&T","day":261}],"XSP4":[{"carrier":"J&T","day":1794},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":2}]},"2026-06-23":{"1330427026":[{"carrier":"Carvalima","day":1}],"1614592422":[{"carrier":"J&T","day":1}],"849817033_21159":[{"carrier":"Loggi","day":1}],"849817033_22725":[{"carrier":"Loggi","day":1}],"849817033_9352068":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":8653},{"carrier":"Jad","day":841},{"carrier":"Loggi","day":1451}],"BRBA01":[{"carrier":"J&T","day":3918}],"BRBA02":[{"carrier":"J&T","day":49}],"BRSP02":[{"carrier":"J&T","day":20007}],"BRSP04":[{"carrier":"J&T","day":2296}],"BRSP14":[{"carrier":"J&T","day":36729}],"BRTR07":[{"carrier":"Jad","day":7}],"BRTW01":[{"carrier":"Loggi","day":2}],"BRXGO1":[{"carrier":"J&T","day":12661}],"BRXSP10":[{"carrier":"J&T","day":28222},{"carrier":"Loggi","day":1440}],"BRXSP5":[{"carrier":"J&T","day":1545}],"BRXSP9":[{"carrier":"Carvalima","day":4790},{"carrier":"Dominalog","day":1280},{"carrier":"J&T","day":79414},{"carrier":"Jad","day":5755},{"carrier":"Loggi","day":5052},{"carrier":"iMile Fast","day":3058},{"carrier":"iMile Slow","day":4286}],"CAMPINAS":[{"carrier":"J&T","day":11308},{"carrier":"Jad","day":757},{"carrier":"Loggi","day":605}],"XMG1":[{"carrier":"J&T","day":5881}],"XSP4":[{"carrier":"J&T","day":829},{"carrier":"Jad","day":363},{"carrier":"Loggi","day":491}]},"2026-06-24":{"1330427026":[{"carrier":"Dominalog","day":2}],"1406914144":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":28567},{"carrier":"Jad","day":1229},{"carrier":"Loggi","day":1174}],"BRBA01":[{"carrier":"J&T","day":5061}],"BRBA02":[{"carrier":"J&T","day":39}],"BRSP02":[{"carrier":"J&T","day":10596}],"BRSP04":[{"carrier":"J&T","day":16458}],"BRSP14":[{"carrier":"J&T","day":38541}],"BRTR07":[{"carrier":"Jad","day":7}],"BRTW01":[{"carrier":"Loggi","day":1}],"BRXGO1":[{"carrier":"J&T","day":6158}],"BRXSP10":[{"carrier":"J&T","day":24381},{"carrier":"Loggi","day":935}],"BRXSP5":[{"carrier":"J&T","day":7524}],"BRXSP9":[{"carrier":"Carvalima","day":6081},{"carrier":"Dominalog","day":1176},{"carrier":"J&T","day":32370},{"carrier":"Jad","day":4399},{"carrier":"Loggi","day":6411},{"carrier":"iMile Fast","day":2502},{"carrier":"iMile Slow","day":911}],"CAMPINAS":[{"carrier":"J&T","day":9804},{"carrier":"Jad","day":521},{"carrier":"Loggi","day":311}],"XMG1":[{"carrier":"J&T","day":7531}],"XSP4":[{"carrier":"J&T","day":8099},{"carrier":"Jad","day":320},{"carrier":"Loggi","day":247}]},"2026-06-25":{"1330427026":[{"carrier":"Dominalog","day":3}],"849817033_43536":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":62648},{"carrier":"Jad","day":482},{"carrier":"Loggi","day":716}],"BRBA01":[{"carrier":"J&T","day":2762}],"BRBA02":[{"carrier":"J&T","day":41}],"BRSP02":[{"carrier":"J&T","day":9790}],"BRSP04":[{"carrier":"J&T","day":1562}],"BRSP14":[{"carrier":"J&T","day":13114}],"BRTR07":[{"carrier":"Jad","day":19}],"BRTW01":[{"carrier":"Loggi","day":2}],"BRXGO1":[{"carrier":"J&T","day":8605}],"BRXSP10":[{"carrier":"J&T","day":40185},{"carrier":"Loggi","day":632}],"BRXSP5":[{"carrier":"J&T","day":10987}],"BRXSP9":[{"carrier":"Carvalima","day":3303},{"carrier":"Dominalog","day":1204},{"carrier":"J&T","day":37401},{"carrier":"Jad","day":3310},{"carrier":"Loggi","day":5254},{"carrier":"iMile Fast","day":2459},{"carrier":"iMile Slow","day":2546}],"CAMPINAS":[{"carrier":"J&T","day":18731},{"carrier":"Jad","day":196},{"carrier":"Loggi","day":167}],"EBA20":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":18851}],"XSP4":[{"carrier":"J&T","day":17632},{"carrier":"Jad","day":216},{"carrier":"Loggi","day":267}]},"2026-06-26":{"1330427026":[{"carrier":"Dominalog","day":1}],"849817033_229773184":[{"carrier":"Loggi","day":1}],"ARENA":[{"carrier":"J&T","day":21928},{"carrier":"Jad","day":600},{"carrier":"Loggi","day":1027}],"BRBA01":[{"carrier":"J&T","day":2230}],"BRBA02":[{"carrier":"J&T","day":6}],"BRSP02":[{"carrier":"J&T","day":19484}],"BRSP04":[{"carrier":"J&T","day":7202}],"BRSP14":[{"carrier":"J&T","day":36523}],"BRTR01":[{"carrier":"Loggi","day":3}],"BRTR07":[{"carrier":"Jad","day":5}],"BRTW01":[{"carrier":"Loggi","day":1}],"BRXGO1":[{"carrier":"J&T","day":11068}],"BRXSP10":[{"carrier":"J&T","day":12150},{"carrier":"Loggi","day":649}],"BRXSP5":[{"carrier":"J&T","day":11244}],"BRXSP9":[{"carrier":"Carvalima","day":3693},{"carrier":"Dominalog","day":1318},{"carrier":"J&T","day":110574},{"carrier":"Jad","day":6150},{"carrier":"Loggi","day":5336},{"carrier":"iMile Fast","day":3246},{"carrier":"iMile Slow","day":6272}],"CAMPINAS":[{"carrier":"J&T","day":14575},{"carrier":"Jad","day":255},{"carrier":"Loggi","day":252}],"XMG1":[{"carrier":"J&T","day":10094}],"XSP4":[{"carrier":"J&T","day":3308},{"carrier":"Jad","day":293},{"carrier":"Loggi","day":183}]},"2026-06-27":{"ARENA":[{"carrier":"J&T","day":54623},{"carrier":"Jad","day":860},{"carrier":"Loggi","day":736}],"BRBA01":[{"carrier":"J&T","day":1021}],"BRBA02":[{"carrier":"J&T","day":1}],"BRSP02":[{"carrier":"J&T","day":11015}],"BRSP04":[{"carrier":"J&T","day":15925}],"BRSP14":[{"carrier":"J&T","day":6472}],"BRTW01":[{"carrier":"Loggi","day":3}],"BRXGO1":[{"carrier":"J&T","day":11008}],"BRXSP10":[{"carrier":"J&T","day":49984},{"carrier":"Loggi","day":639}],"BRXSP5":[{"carrier":"J&T","day":31087}],"BRXSP9":[{"carrier":"Carvalima","day":2477},{"carrier":"Dominalog","day":968},{"carrier":"J&T","day":48640},{"carrier":"Jad","day":2608},{"carrier":"Loggi","day":3062},{"carrier":"iMile Fast","day":2702},{"carrier":"iMile Slow","day":2310}],"CAMPINAS":[{"carrier":"J&T","day":10424},{"carrier":"Jad","day":402},{"carrier":"Loggi","day":225}],"XMG1":[{"carrier":"J&T","day":17123}],"XSP4":[{"carrier":"J&T","day":8547},{"carrier":"Jad","day":383},{"carrier":"Loggi","day":153}]},"2026-06-28":{"BRTW01":[{"carrier":"Loggi","day":1}]},"2026-06-29":{"ARENA":[{"carrier":"J&T","day":1437}],"BRBA01":[{"carrier":"J&T","day":204}],"BRBA02":[{"carrier":"J&T","day":13}],"BRSP02":[{"carrier":"J&T","day":2116}],"BRSP04":[{"carrier":"J&T","day":17310}],"BRSP14":[{"carrier":"J&T","day":13051}],"BRTR01":[{"carrier":"Loggi","day":4}],"BRTR07":[{"carrier":"Jad","day":4}],"BRTW01":[{"carrier":"Loggi","day":1}],"BRXSP10":[{"carrier":"J&T","day":2923}],"BRXSP5":[{"carrier":"J&T","day":384}],"BRXSP9":[{"carrier":"Carvalima","day":3236},{"carrier":"Dominalog","day":1025},{"carrier":"J&T","day":189947},{"carrier":"Jad","day":1989},{"carrier":"Loggi","day":4063},{"carrier":"iMile Fast","day":3822},{"carrier":"iMile Slow","day":4630}],"CAMPINAS":[{"carrier":"J&T","day":43}],"XSP4":[{"carrier":"J&T","day":6114},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":3}]},"2026-06-30":{"1330427026":[{"carrier":"Carvalima","day":3}],"ARENA":[{"carrier":"J&T","day":7197},{"carrier":"Jad","day":512},{"carrier":"Loggi","day":896}],"BRBA01":[{"carrier":"J&T","day":1498}],"BRBA02":[{"carrier":"J&T","day":20}],"BRSP02":[{"carrier":"J&T","day":2416}],"BRSP04":[{"carrier":"J&T","day":1654}],"BRSP14":[{"carrier":"J&T","day":29883}],"BRTR07":[{"carrier":"Jad","day":5}],"BRTW01":[{"carrier":"Loggi","day":13}],"BRXGO1":[{"carrier":"J&T","day":18557}],"BRXSP10":[{"carrier":"J&T","day":36740},{"carrier":"Loggi","day":927}],"BRXSP5":[{"carrier":"J&T","day":949}],"BRXSP9":[{"carrier":"Carvalima","day":5010},{"carrier":"Dominalog","day":760},{"carrier":"J&T","day":61935},{"carrier":"Jad","day":3183},{"carrier":"Loggi","day":4994},{"carrier":"iMile Fast","day":3161},{"carrier":"iMile Slow","day":3734}],"CAMPINAS":[{"carrier":"J&T","day":16243},{"carrier":"Jad","day":576},{"carrier":"Loggi","day":329}],"XMG1":[{"carrier":"J&T","day":11009}],"XSP4":[{"carrier":"J&T","day":88},{"carrier":"Jad","day":158},{"carrier":"Loggi","day":133}]},"2026-07-01":{"1586561331":[{"carrier":"Loggi","day":1}],"ARENA":[{"carrier":"J&T","day":10432},{"carrier":"Jad","day":671},{"carrier":"Loggi","day":847}],"BRBA01":[{"carrier":"J&T","day":2137}],"BRBA02":[{"carrier":"J&T","day":22}],"BRSP02":[{"carrier":"J&T","day":3740}],"BRSP04":[{"carrier":"J&T","day":10178}],"BRSP14":[{"carrier":"J&T","day":46779}],"BRTR01":[{"carrier":"Loggi","day":15}],"BRTR07":[{"carrier":"Jad","day":12}],"BRTW01":[{"carrier":"Loggi","day":3}],"BRXGO1":[{"carrier":"J&T","day":5127}],"BRXSP10":[{"carrier":"J&T","day":10208},{"carrier":"Loggi","day":738}],"BRXSP5":[{"carrier":"J&T","day":1286}],"BRXSP9":[{"carrier":"Carvalima","day":4081},{"carrier":"Dominalog","day":1010},{"carrier":"J&T","day":70491},{"carrier":"Jad","day":2789},{"carrier":"Loggi","day":4008},{"carrier":"iMile Fast","day":4018},{"carrier":"iMile Slow","day":5408}],"CAMPINAS":[{"carrier":"J&T","day":3001},{"carrier":"Jad","day":240},{"carrier":"Loggi","day":239}],"XMG1":[{"carrier":"J&T","day":2807}],"XSP4":[{"carrier":"J&T","day":2121},{"carrier":"Jad","day":254},{"carrier":"Loggi","day":201}]},"2026-07-02":{"ARENA":[{"carrier":"J&T","day":43304},{"carrier":"Jad","day":489},{"carrier":"Loggi","day":788}],"BRBA01":[{"carrier":"J&T","day":1231}],"BRBA02":[{"carrier":"J&T","day":13}],"BRSP02":[{"carrier":"J&T","day":12229}],"BRSP04":[{"carrier":"J&T","day":26594}],"BRSP14":[{"carrier":"J&T","day":27046}],"BRTR01":[{"carrier":"Loggi","day":18}],"BRTR07":[{"carrier":"Jad","day":10}],"BRTW01":[{"carrier":"Loggi","day":17}],"BRXGO1":[{"carrier":"J&T","day":5510}],"BRXSP10":[{"carrier":"J&T","day":27632},{"carrier":"Loggi","day":657}],"BRXSP5":[{"carrier":"J&T","day":6290}],"BRXSP9":[{"carrier":"Carvalima","day":3295},{"carrier":"Dominalog","day":941},{"carrier":"J&T","day":79142},{"carrier":"Jad","day":2684},{"carrier":"Loggi","day":3446},{"carrier":"iMile Fast","day":4055},{"carrier":"iMile Slow","day":5640}],"CAMPINAS":[{"carrier":"J&T","day":8608},{"carrier":"Jad","day":308},{"carrier":"Loggi","day":175}],"XMG1":[{"carrier":"J&T","day":13049}],"XSP4":[{"carrier":"J&T","day":17619},{"carrier":"Jad","day":239},{"carrier":"Loggi","day":125}]},"2026-07-03":{"1569100971":[{"carrier":"Loggi","day":1}],"849817033_25374":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":54808},{"carrier":"Jad","day":463},{"carrier":"Loggi","day":756}],"BRBA01":[{"carrier":"J&T","day":756}],"BRBA02":[{"carrier":"J&T","day":14}],"BRSP02":[{"carrier":"J&T","day":6823}],"BRSP04":[{"carrier":"J&T","day":11339}],"BRSP14":[{"carrier":"J&T","day":22314}],"BRTR01":[{"carrier":"Loggi","day":23}],"BRTR07":[{"carrier":"Jad","day":5}],"BRTW01":[{"carrier":"Loggi","day":24}],"BRTW02":[{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"BRXGO1":[{"carrier":"J&T","day":10235}],"BRXSP10":[{"carrier":"J&T","day":29686},{"carrier":"Loggi","day":523}],"BRXSP5":[{"carrier":"J&T","day":13671}],"BRXSP9":[{"carrier":"Carvalima","day":3368},{"carrier":"Dominalog","day":1083},{"carrier":"J&T","day":80820},{"carrier":"Jad","day":2223},{"carrier":"Loggi","day":3524},{"carrier":"iMile Fast","day":4015},{"carrier":"iMile Slow","day":6655}],"CAMPINAS":[{"carrier":"J&T","day":19133},{"carrier":"Jad","day":247},{"carrier":"Loggi","day":198}],"XMG1":[{"carrier":"J&T","day":20638}],"XSP4":[{"carrier":"J&T","day":9230},{"carrier":"Jad","day":189},{"carrier":"Loggi","day":109}]},"2026-07-04":{"ARENA":[{"carrier":"J&T","day":50753},{"carrier":"Jad","day":377},{"carrier":"Loggi","day":638}],"BRBA01":[{"carrier":"J&T","day":2190}],"BRBA02":[{"carrier":"J&T","day":8}],"BRSP02":[{"carrier":"J&T","day":12397}],"BRSP04":[{"carrier":"J&T","day":12044}],"BRSP14":[{"carrier":"J&T","day":9819}],"BRTR01":[{"carrier":"Loggi","day":2}],"BRTW01":[{"carrier":"Loggi","day":2}],"BRXGO1":[{"carrier":"J&T","day":12216}],"BRXSP10":[{"carrier":"J&T","day":38355},{"carrier":"Loggi","day":520}],"BRXSP5":[{"carrier":"J&T","day":23582}],"BRXSP9":[{"carrier":"Carvalima","day":3068},{"carrier":"Dominalog","day":816},{"carrier":"J&T","day":72352},{"carrier":"Jad","day":1639},{"carrier":"Loggi","day":2625},{"carrier":"iMile Fast","day":4165},{"carrier":"iMile Slow","day":4560}],"CAMPINAS":[{"carrier":"J&T","day":11907},{"carrier":"Jad","day":200},{"carrier":"Loggi","day":171}],"XMG1":[{"carrier":"J&T","day":22354}],"XSP4":[{"carrier":"J&T","day":5606},{"carrier":"Jad","day":146},{"carrier":"Loggi","day":106}]},"2026-07-05":{"BRXSP9":[{"carrier":"J&T","day":1}]},"2026-07-06":{"ARENA":[{"carrier":"J&T","day":2622}],"BRBA01":[{"carrier":"J&T","day":344}],"BRSP02":[{"carrier":"J&T","day":5828}],"BRSP04":[{"carrier":"J&T","day":3072}],"BRSP14":[{"carrier":"J&T","day":9892}],"BRTR01":[{"carrier":"Loggi","day":27}],"BRTR07":[{"carrier":"Jad","day":30}],"BRTW01":[{"carrier":"Loggi","day":4}],"BRXSP10":[{"carrier":"J&T","day":2025}],"BRXSP14":[{"carrier":"J&T","day":1}],"BRXSP5":[{"carrier":"J&T","day":160}],"BRXSP9":[{"carrier":"Carvalima","day":3944},{"carrier":"Dominalog","day":810},{"carrier":"J&T","day":154695},{"carrier":"Jad","day":2606},{"carrier":"Loggi","day":3426},{"carrier":"iMile Fast","day":2962},{"carrier":"iMile Slow","day":4580}],"CAMPINAS":[{"carrier":"J&T","day":28}],"XMG1":[{"carrier":"J&T","day":799}],"XSP4":[{"carrier":"J&T","day":4700}]},"2026-07-07":{"ARENA":[{"carrier":"J&T","day":9154},{"carrier":"Jad","day":564},{"carrier":"Loggi","day":888}],"BRBA01":[{"carrier":"J&T","day":525}],"BRBA02":[{"carrier":"J&T","day":2}],"BRSP02":[{"carrier":"J&T","day":13665}],"BRSP04":[{"carrier":"J&T","day":2710}],"BRSP14":[{"carrier":"J&T","day":35733}],"BRTR01":[{"carrier":"Loggi","day":11}],"BRTR07":[{"carrier":"Jad","day":21}],"BRTW01":[{"carrier":"Loggi","day":5}],"BRXGO1":[{"carrier":"J&T","day":14207}],"BRXSP10":[{"carrier":"J&T","day":40265},{"carrier":"Loggi","day":667}],"BRXSP5":[{"carrier":"J&T","day":1103}],"BRXSP9":[{"carrier":"Carvalima","day":5160},{"carrier":"Dominalog","day":1103},{"carrier":"J&T","day":64611},{"carrier":"Jad","day":2104},{"carrier":"Loggi","day":2842},{"carrier":"iMile Fast","day":5233},{"carrier":"iMile Slow","day":4365}],"CAMPINAS":[{"carrier":"J&T","day":14624},{"carrier":"Jad","day":395},{"carrier":"Loggi","day":266}],"XMG1":[{"carrier":"J&T","day":15805}],"XSP4":[{"carrier":"J&T","day":1522},{"carrier":"Jad","day":132},{"carrier":"Loggi","day":147}]},"2026-07-08":{"849817033_184980":[{"carrier":"Loggi","day":1}],"ARENA":[{"carrier":"J&T","day":34851},{"carrier":"Jad","day":693},{"carrier":"Loggi","day":924}],"BRBA01":[{"carrier":"J&T","day":587}],"BRBA02":[{"carrier":"J&T","day":2}],"BRSP02":[{"carrier":"J&T","day":7902}],"BRSP04":[{"carrier":"J&T","day":22821}],"BRSP14":[{"carrier":"J&T","day":38726}],"BRTR01":[{"carrier":"Loggi","day":6}],"BRTR07":[{"carrier":"Jad","day":14}],"BRTW01":[{"carrier":"Loggi","day":4}],"BRXGO1":[{"carrier":"J&T","day":3368}],"BRXSP10":[{"carrier":"J&T","day":20445},{"carrier":"Loggi","day":762}],"BRXSP5":[{"carrier":"J&T","day":7977}],"BRXSP9":[{"carrier":"Carvalima","day":4916},{"carrier":"Dominalog","day":1132},{"carrier":"J&T","day":61716},{"carrier":"Jad","day":1786},{"carrier":"Loggi","day":1875},{"carrier":"iMile Fast","day":4373},{"carrier":"iMile Slow","day":6739}],"CAMPINAS":[{"carrier":"J&T","day":6759},{"carrier":"Jad","day":261},{"carrier":"Loggi","day":206}],"XMG1":[{"carrier":"J&T","day":4727}],"XSP4":[{"carrier":"J&T","day":13404},{"carrier":"Jad","day":300},{"carrier":"Loggi","day":135}]},"2026-07-09":{"1246929878":[{"carrier":"Carvalima","day":1}],"1252982704":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":62815},{"carrier":"Jad","day":648},{"carrier":"Loggi","day":885}],"BRBA01":[{"carrier":"J&T","day":919}],"BRBA02":[{"carrier":"J&T","day":1}],"BRSP02":[{"carrier":"J&T","day":19571}],"BRSP04":[{"carrier":"J&T","day":16052}],"BRSP14":[{"carrier":"J&T","day":33662}],"BRTR07":[{"carrier":"Jad","day":10}],"BRTW01":[{"carrier":"Loggi","day":2}],"BRTW06":[{"carrier":"Jad","day":1}],"BRXGO1":[{"carrier":"J&T","day":3559}],"BRXSP10":[{"carrier":"J&T","day":42655},{"carrier":"Loggi","day":655}],"BRXSP5":[{"carrier":"J&T","day":27307}],"BRXSP9":[{"carrier":"Carvalima","day":4100},{"carrier":"Dominalog","day":1254},{"carrier":"J&T","day":83138},{"carrier":"Jad","day":3229},{"carrier":"Loggi","day":4820},{"carrier":"iMile Fast","day":8258},{"carrier":"iMile Slow","day":8593}],"CAMPINAS":[{"carrier":"J&T","day":16483},{"carrier":"Jad","day":333},{"carrier":"Loggi","day":210}],"EPI3":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":15266}],"XSP4":[{"carrier":"J&T","day":12279},{"carrier":"Jad","day":241},{"carrier":"Loggi","day":163}]},"2026-07-10":{"849817033_148258":[{"carrier":"J&T","day":1}],"849817033_2282420":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":1557},{"carrier":"Jad","day":7},{"carrier":"Loggi","day":58}],"BRBA01":[{"carrier":"J&T","day":454}],"BRSP02":[{"carrier":"J&T","day":5668}],"BRSP04":[{"carrier":"J&T","day":10286}],"BRSP14":[{"carrier":"J&T","day":25792}],"BRTR07":[{"carrier":"Jad","day":18}],"BRTW01":[{"carrier":"Loggi","day":4}],"BRXGO1":[{"carrier":"J&T","day":13236}],"BRXSP10":[{"carrier":"J&T","day":32175},{"carrier":"Loggi","day":185}],"BRXSP5":[{"carrier":"J&T","day":621}],"BRXSP9":[{"carrier":"Carvalima","day":2873},{"carrier":"Dominalog","day":914},{"carrier":"J&T","day":116799},{"carrier":"Jad","day":1866},{"carrier":"Loggi","day":3014},{"carrier":"iMile Fast","day":6764},{"carrier":"iMile Slow","day":6325}],"CAMPINAS":[{"carrier":"J&T","day":13265},{"carrier":"Jad","day":112},{"carrier":"Loggi","day":46}],"SRS9":[{"carrier":"J&T","day":1}],"SSP14":[{"carrier":"J&T","day":1}],"SSP26":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":18441}],"XSP4":[{"carrier":"J&T","day":2}]},"2026-07-11":{"849817033_148258":[{"carrier":"J&T","day":2}],"ARENA":[{"carrier":"J&T","day":24148}],"BRBA01":[{"carrier":"J&T","day":1207}],"BRSP02":[{"carrier":"J&T","day":10186}],"BRSP04":[{"carrier":"J&T","day":16184}],"BRSP14":[{"carrier":"J&T","day":11520}],"BRTW02":[{"carrier":"Loggi","day":1}],"BRXGO1":[{"carrier":"J&T","day":10236}],"BRXSP10":[{"carrier":"J&T","day":7349}],"BRXSP5":[{"carrier":"J&T","day":19316}],"BRXSP9":[{"carrier":"Carvalima","day":2},{"carrier":"J&T","day":74289},{"carrier":"iMile Fast","day":8183},{"carrier":"iMile Slow","day":4544}],"CAMPINAS":[{"carrier":"J&T","day":4784},{"carrier":"Jad","day":1}],"SSP5":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":10378}],"XSP4":[{"carrier":"J&T","day":8461}]},"2026-07-12":{"BRTW01":[{"carrier":"Loggi","day":1}]},"2026-07-13":{"ARENA":[{"carrier":"J&T","day":896},{"carrier":"Jad","day":808},{"carrier":"Loggi","day":984}],"BRBA01":[{"carrier":"J&T","day":1545}],"BRSP02":[{"carrier":"J&T","day":13967}],"BRSP04":[{"carrier":"J&T","day":10353}],"BRSP14":[{"carrier":"J&T","day":13114}],"BRTR07":[{"carrier":"Jad","day":11}],"BRXMG3":[{"carrier":"Carvalima","day":1}],"BRXSP10":[{"carrier":"J&T","day":478},{"carrier":"Loggi","day":695}],"BRXSP11":[{"carrier":"Carvalima","day":1}],"BRXSP14":[{"carrier":"Dominalog","day":1},{"carrier":"J&T","day":4}],"BRXSP5":[{"carrier":"Carvalima","day":1},{"carrier":"J&T","day":88}],"BRXSP9":[{"carrier":"Carvalima","day":10402},{"carrier":"Dominalog","day":2832},{"carrier":"J&T","day":147404},{"carrier":"Jad","day":4044},{"carrier":"Loggi","day":5677},{"carrier":"iMile Fast","day":8684},{"carrier":"iMile Slow","day":5826}],"CAMPINAS":[{"carrier":"J&T","day":40},{"carrier":"Jad","day":276},{"carrier":"Loggi","day":252}],"EMR7":[{"carrier":"Carvalima","day":1}],"EPA3":[{"carrier":"J&T","day":1}],"ESP18":[{"carrier":"J&T","day":1}],"ETO2":[{"carrier":"J&T","day":1}],"XSP4":[{"carrier":"Jad","day":302},{"carrier":"Loggi","day":121}]},"2026-07-14":{"1057773995":[{"carrier":"J&T","day":1},{"carrier":"Loggi","day":9}],"1246927119":[{"carrier":"Dominalog","day":1},{"carrier":"Loggi","day":1}],"1246932714":[{"carrier":"Jad","day":1}],"1488327300":[{"carrier":"J&T","day":2}],"1564877409":[{"carrier":"J&T","day":1}],"1596182550":[{"carrier":"Jad","day":1}],"1596209420":[{"carrier":"Loggi","day":1}],"ARENA":[{"carrier":"J&T","day":11343},{"carrier":"Jad","day":727},{"carrier":"Loggi","day":995}],"BRBA01":[{"carrier":"J&T","day":1645}],"BRBA02":[{"carrier":"J&T","day":1}],"BRSP02":[{"carrier":"J&T","day":12723}],"BRSP04":[{"carrier":"J&T","day":16319}],"BRSP14":[{"carrier":"J&T","day":19457}],"BRXGO1":[{"carrier":"J&T","day":6932}],"BRXSP10":[{"carrier":"J&T","day":46361},{"carrier":"Loggi","day":808}],"BRXSP5":[{"carrier":"J&T","day":1184}],"BRXSP9":[{"carrier":"Carvalima","day":3659},{"carrier":"Dominalog","day":1304},{"carrier":"J&T","day":70581},{"carrier":"Jad","day":2626},{"carrier":"Loggi","day":4951},{"carrier":"iMile Fast","day":5915},{"carrier":"iMile Slow","day":6192}],"CAMPINAS":[{"carrier":"J&T","day":20854},{"carrier":"Jad","day":431},{"carrier":"Loggi","day":589}],"EMN2":[{"carrier":"iMile Fast","day":1}],"SAM1":[{"carrier":"iMile Fast","day":1}],"SSP11":[{"carrier":"Jad","day":2}],"XMG1":[{"carrier":"J&T","day":12944}],"XSP4":[{"carrier":"J&T","day":4801},{"carrier":"Jad","day":235},{"carrier":"Loggi","day":259}]},"2026-07-15":{"1352925616":[{"carrier":"J&T","day":1}],"1353704110":[{"carrier":"J&T","day":1}],"1515611824":[{"carrier":"J&T","day":1}],"1614112221":[{"carrier":"J&T","day":2}],"849817033_10722":[{"carrier":"J&T","day":1}],"849817033_12328344":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":39752},{"carrier":"Jad","day":335},{"carrier":"Loggi","day":525}],"BRBA01":[{"carrier":"J&T","day":1021}],"BRBA02":[{"carrier":"J&T","day":24}],"BRSP02":[{"carrier":"J&T","day":6531}],"BRSP04":[{"carrier":"J&T","day":13458}],"BRSP14":[{"carrier":"J&T","day":5251}],"BRXGO1":[{"carrier":"J&T","day":3291}],"BRXSP10":[{"carrier":"J&T","day":27383},{"carrier":"Loggi","day":544}],"BRXSP5":[{"carrier":"J&T","day":6212}],"BRXSP9":[{"carrier":"Carvalima","day":2781},{"carrier":"Dominalog","day":1250},{"carrier":"J&T","day":50451},{"carrier":"Jad","day":1786},{"carrier":"Loggi","day":1752},{"carrier":"iMile Fast","day":3300},{"carrier":"iMile Slow","day":6747}],"CAMPINAS":[{"carrier":"J&T","day":7177},{"carrier":"Jad","day":142},{"carrier":"Loggi","day":190}],"SSP4":[{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":3604}],"XSP4":[{"carrier":"J&T","day":11411},{"carrier":"Jad","day":73},{"carrier":"Loggi","day":144}]},"2026-07-16":{"1305356898":[{"carrier":"J&T","day":1}],"1352413861":[{"carrier":"J&T","day":1}],"1488327300":[{"carrier":"J&T","day":2}],"1596215918":[{"carrier":"J&T","day":1}],"1596216426":[{"carrier":"J&T","day":1}],"1621465863":[{"carrier":"J&T","day":3}],"ARENA":[{"carrier":"J&T","day":38002},{"carrier":"Jad","day":108},{"carrier":"Loggi","day":397}],"BRBA01":[{"carrier":"J&T","day":896}],"BRBA02":[{"carrier":"J&T","day":13}],"BRSP02":[{"carrier":"J&T","day":5706}],"BRSP04":[{"carrier":"J&T","day":5390}],"BRSP14":[{"carrier":"J&T","day":3852}],"BRXGO1":[{"carrier":"J&T","day":2384}],"BRXSP10":[{"carrier":"J&T","day":27572},{"carrier":"Loggi","day":257}],"BRXSP5":[{"carrier":"J&T","day":8397}],"BRXSP9":[{"carrier":"Carvalima","day":1246},{"carrier":"Dominalog","day":902},{"carrier":"J&T","day":44536},{"carrier":"Jad","day":1481},{"carrier":"Loggi","day":1718},{"carrier":"iMile Fast","day":1922},{"carrier":"iMile Slow","day":7552}],"CAMPINAS":[{"carrier":"J&T","day":13861},{"carrier":"Jad","day":32},{"carrier":"Loggi","day":189}],"XMG1":[{"carrier":"J&T","day":16023}],"XSP4":[{"carrier":"J&T","day":7585},{"carrier":"Jad","day":25},{"carrier":"Loggi","day":140}]},"2026-07-17":{"1246927119":[{"carrier":"J&T","day":1}],"1304671541":[{"carrier":"J&T","day":1}],"1352924252":[{"carrier":"J&T","day":2}],"1353702596":[{"carrier":"J&T","day":1}],"1411847264":[{"carrier":"J&T","day":1}],"1582454121":[{"carrier":"J&T","day":2}],"1585939039":[{"carrier":"J&T","day":1}],"1596209252":[{"carrier":"J&T","day":1}],"1596215480":[{"carrier":"J&T","day":1}],"1596216426":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":10837},{"carrier":"Jad","day":40},{"carrier":"Loggi","day":255}],"BRBA01":[{"carrier":"J&T","day":420}],"BRBA02":[{"carrier":"J&T","day":3}],"BRSP02":[{"carrier":"J&T","day":1322}],"BRSP04":[{"carrier":"J&T","day":1687}],"BRSP14":[{"carrier":"J&T","day":1525}],"BRXGO1":[{"carrier":"J&T","day":4260}],"BRXSP10":[{"carrier":"J&T","day":8016},{"carrier":"Loggi","day":159}],"BRXSP5":[{"carrier":"J&T","day":13995}],"BRXSP9":[{"carrier":"Carvalima","day":767},{"carrier":"Dominalog","day":409},{"carrier":"J&T","day":56061},{"carrier":"Jad","day":1055},{"carrier":"Loggi","day":918},{"carrier":"iMile Fast","day":648},{"carrier":"iMile Slow","day":5556}],"CAMPINAS":[{"carrier":"J&T","day":4722},{"carrier":"Jad","day":7},{"carrier":"Loggi","day":97}],"EBA25":[{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":17571}],"XSP4":[{"carrier":"J&T","day":1913},{"carrier":"Jad","day":4},{"carrier":"Loggi","day":83}]},"2026-07-18":{"ARENA":[{"carrier":"J&T","day":7838},{"carrier":"Jad","day":19},{"carrier":"Loggi","day":200}],"BRBA01":[{"carrier":"J&T","day":376}],"BRBA02":[{"carrier":"J&T","day":1}],"BRSP02":[{"carrier":"J&T","day":943}],"BRSP04":[{"carrier":"J&T","day":1074}],"BRSP14":[{"carrier":"J&T","day":901}],"BRXGO1":[{"carrier":"J&T","day":3234}],"BRXSP10":[{"carrier":"J&T","day":4703},{"carrier":"Loggi","day":141}],"BRXSP5":[{"carrier":"J&T","day":4409}],"BRXSP9":[{"carrier":"Carvalima","day":216},{"carrier":"Dominalog","day":226},{"carrier":"J&T","day":23860},{"carrier":"Jad","day":585},{"carrier":"Loggi","day":805},{"carrier":"iMile Fast","day":276},{"carrier":"iMile Slow","day":3467}],"CAMPINAS":[{"carrier":"J&T","day":2619},{"carrier":"Jad","day":4},{"carrier":"Loggi","day":133}],"XMG1":[{"carrier":"J&T","day":4930}],"XSP4":[{"carrier":"J&T","day":1254},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":64}]},"2026-07-20":{"ARENA":[{"carrier":"J&T","day":439}],"BRBA01":[{"carrier":"J&T","day":489}],"BRSP02":[{"carrier":"J&T","day":182}],"BRSP14":[{"carrier":"J&T","day":896}],"BRXSP10":[{"carrier":"J&T","day":272}],"BRXSP5":[{"carrier":"J&T","day":13}],"BRXSP9":[{"carrier":"Carvalima","day":145},{"carrier":"Dominalog","day":57},{"carrier":"J&T","day":43487},{"carrier":"Jad","day":184},{"carrier":"Loggi","day":806},{"carrier":"iMile Fast","day":69},{"carrier":"iMile Slow","day":3080}],"CAMPINAS":[{"carrier":"J&T","day":14}]},"2026-07-21":{"1614112221":[{"carrier":"J&T","day":1}],"ARENA":[{"carrier":"J&T","day":1279},{"carrier":"Jad","day":13},{"carrier":"Loggi","day":40}],"BRBA01":[{"carrier":"J&T","day":250}],"BRBA02":[{"carrier":"J&T","day":4}],"BRSP02":[{"carrier":"J&T","day":845}],"BRSP04":[{"carrier":"J&T","day":1298}],"BRSP14":[{"carrier":"J&T","day":1110}],"BRXGO1":[{"carrier":"J&T","day":1647}],"BRXSP10":[{"carrier":"J&T","day":8477},{"carrier":"Loggi","day":32}],"BRXSP5":[{"carrier":"J&T","day":154}],"BRXSP9":[{"carrier":"Carvalima","day":50},{"carrier":"Dominalog","day":30},{"carrier":"J&T","day":11566},{"carrier":"Jad","day":47},{"carrier":"Loggi","day":118},{"carrier":"iMile Fast","day":65},{"carrier":"iMile Slow","day":1942}],"CAMPINAS":[{"carrier":"J&T","day":4889},{"carrier":"Jad","day":36},{"carrier":"Loggi","day":37}],"XMG1":[{"carrier":"J&T","day":3852}],"XSP4":[{"carrier":"J&T","day":917},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":15}]},"2026-07-22":{"ARENA":[{"carrier":"J&T","day":4532},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":3}],"BRBA01":[{"carrier":"J&T","day":189}],"BRBA02":[{"carrier":"J&T","day":6}],"BRSP02":[{"carrier":"J&T","day":619}],"BRSP04":[{"carrier":"J&T","day":1133}],"BRSP14":[{"carrier":"J&T","day":1052}],"BRXGO1":[{"carrier":"J&T","day":559}],"BRXSP10":[{"carrier":"J&T","day":2206},{"carrier":"Loggi","day":23}],"BRXSP5":[{"carrier":"J&T","day":1906}],"BRXSP9":[{"carrier":"Carvalima","day":55},{"carrier":"Dominalog","day":32},{"carrier":"J&T","day":16976},{"carrier":"Jad","day":73},{"carrier":"Loggi","day":90},{"carrier":"iMile Fast","day":71},{"carrier":"iMile Slow","day":1575}],"CAMPINAS":[{"carrier":"J&T","day":883},{"carrier":"Jad","day":5},{"carrier":"Loggi","day":4}],"XMG1":[{"carrier":"J&T","day":2574}],"XSP4":[{"carrier":"J&T","day":529},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":5}]},"2026-07-23":{"ARENA":[{"carrier":"J&T","day":2444},{"carrier":"Jad","day":5},{"carrier":"Loggi","day":3}],"BRBA01":[{"carrier":"J&T","day":27}],"BRBA02":[{"carrier":"J&T","day":1}],"BRSP02":[{"carrier":"J&T","day":749}],"BRSP04":[{"carrier":"J&T","day":1028}],"BRSP14":[{"carrier":"J&T","day":1019}],"BRXGO1":[{"carrier":"J&T","day":398}],"BRXSP10":[{"carrier":"J&T","day":2059},{"carrier":"Loggi","day":7}],"BRXSP5":[{"carrier":"J&T","day":880}],"BRXSP9":[{"carrier":"Carvalima","day":26},{"carrier":"Dominalog","day":33},{"carrier":"J&T","day":7359},{"carrier":"Jad","day":87},{"carrier":"Loggi","day":29},{"carrier":"iMile Fast","day":53},{"carrier":"iMile Slow","day":930}],"CAMPINAS":[{"carrier":"J&T","day":807},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":2272}],"XSP4":[{"carrier":"J&T","day":453},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}]},"2026-07-24":{"ARENA":[{"carrier":"J&T","day":1848},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":2}],"BRBA02":[{"carrier":"J&T","day":3}],"BRSP02":[{"carrier":"J&T","day":494}],"BRSP04":[{"carrier":"J&T","day":575}],"BRSP14":[{"carrier":"J&T","day":670}],"BRXGO1":[{"carrier":"J&T","day":47}],"BRXSP10":[{"carrier":"J&T","day":1550},{"carrier":"Loggi","day":6}],"BRXSP5":[{"carrier":"J&T","day":712}],"BRXSP9":[{"carrier":"Carvalima","day":22},{"carrier":"Dominalog","day":16},{"carrier":"J&T","day":22600},{"carrier":"Jad","day":52},{"carrier":"Loggi","day":18},{"carrier":"iMile Fast","day":31},{"carrier":"iMile Slow","day":635}],"CAMPINAS":[{"carrier":"J&T","day":654},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":1383}],"XSP4":[{"carrier":"J&T","day":347},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}]},"2026-07-25":{"ARENA":[{"carrier":"J&T","day":1842},{"carrier":"Jad","day":1}],"BRBA01":[{"carrier":"J&T","day":1}],"BRBA02":[{"carrier":"J&T","day":10}],"BRSP02":[{"carrier":"J&T","day":255}],"BRSP04":[{"carrier":"J&T","day":165}],"BRSP14":[{"carrier":"J&T","day":277}],"BRXGO1":[{"carrier":"J&T","day":55}],"BRXSP10":[{"carrier":"J&T","day":1457},{"carrier":"Loggi","day":5}],"BRXSP5":[{"carrier":"J&T","day":1054}],"BRXSP9":[{"carrier":"Carvalima","day":23},{"carrier":"Dominalog","day":23},{"carrier":"J&T","day":10055},{"carrier":"Jad","day":32},{"carrier":"Loggi","day":11},{"carrier":"iMile Fast","day":18},{"carrier":"iMile Slow","day":685}],"CAMPINAS":[{"carrier":"J&T","day":577},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":722}],"XSP4":[{"carrier":"J&T","day":257}]},"2026-07-27":{"ARENA":[{"carrier":"J&T","day":17}],"BRBA01":[{"carrier":"J&T","day":13}],"BRSP14":[{"carrier":"J&T","day":292}],"BRXSP10":[{"carrier":"J&T","day":25}],"BRXSP9":[{"carrier":"Carvalima","day":15},{"carrier":"Dominalog","day":13},{"carrier":"J&T","day":8297},{"carrier":"Jad","day":30},{"carrier":"Loggi","day":10},{"carrier":"iMile Fast","day":9},{"carrier":"iMile Slow","day":110}]},"2026-07-28":{"ARENA":[{"carrier":"J&T","day":510},{"carrier":"Jad","day":6},{"carrier":"Loggi","day":7}],"BRSP02":[{"carrier":"J&T","day":232}],"BRSP04":[{"carrier":"J&T","day":389}],"BRSP14":[{"carrier":"J&T","day":254}],"BRXGO1":[{"carrier":"J&T","day":96}],"BRXSP10":[{"carrier":"J&T","day":2354},{"carrier":"Loggi","day":26}],"BRXSP5":[{"carrier":"J&T","day":44}],"BRXSP9":[{"carrier":"Carvalima","day":26},{"carrier":"Dominalog","day":4},{"carrier":"J&T","day":1886},{"carrier":"Jad","day":4},{"carrier":"Loggi","day":3},{"carrier":"iMile Fast","day":43},{"carrier":"iMile Slow","day":30}],"CAMPINAS":[{"carrier":"J&T","day":1034},{"carrier":"Jad","day":8},{"carrier":"Loggi","day":3}],"XMG1":[{"carrier":"J&T","day":940}],"XSP4":[{"carrier":"J&T","day":179},{"carrier":"Loggi","day":2}]},"2026-07-29":{"ARENA":[{"carrier":"J&T","day":1581},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":1}],"BRSP02":[{"carrier":"J&T","day":109}],"BRSP04":[{"carrier":"J&T","day":223}],"BRSP14":[{"carrier":"J&T","day":82}],"BRXGO1":[{"carrier":"J&T","day":19}],"BRXSP10":[{"carrier":"J&T","day":1093},{"carrier":"Loggi","day":13}],"BRXSP5":[{"carrier":"J&T","day":631}],"BRXSP9":[{"carrier":"Carvalima","day":30},{"carrier":"Dominalog","day":6},{"carrier":"J&T","day":4222},{"carrier":"Jad","day":16},{"carrier":"Loggi","day":8},{"carrier":"iMile Fast","day":30},{"carrier":"iMile Slow","day":48}],"CAMPINAS":[{"carrier":"J&T","day":251},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":545}],"XSP4":[{"carrier":"J&T","day":128},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}]},"2026-07-30":{"ARENA":[{"carrier":"J&T","day":661},{"carrier":"Loggi","day":7}],"BRSP02":[{"carrier":"J&T","day":122}],"BRSP04":[{"carrier":"J&T","day":239}],"BRSP14":[{"carrier":"J&T","day":70}],"BRXGO1":[{"carrier":"J&T","day":70}],"BRXSP10":[{"carrier":"J&T","day":878},{"carrier":"Loggi","day":2}],"BRXSP5":[{"carrier":"J&T","day":247}],"BRXSP9":[{"carrier":"Carvalima","day":20},{"carrier":"Dominalog","day":8},{"carrier":"J&T","day":2367},{"carrier":"Jad","day":28},{"carrier":"Loggi","day":11},{"carrier":"iMile Fast","day":46},{"carrier":"iMile Slow","day":16}],"CAMPINAS":[{"carrier":"J&T","day":252},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":345}],"XSP4":[{"carrier":"J&T","day":108}]},"2026-07-31":{"ARENA":[{"carrier":"J&T","day":344},{"carrier":"Loggi","day":2}],"BRSP02":[{"carrier":"J&T","day":77}],"BRSP04":[{"carrier":"J&T","day":81}],"BRSP14":[{"carrier":"J&T","day":35}],"BRXGO1":[{"carrier":"J&T","day":16}],"BRXSP10":[{"carrier":"J&T","day":590},{"carrier":"Loggi","day":4}],"BRXSP5":[{"carrier":"J&T","day":178}],"BRXSP9":[{"carrier":"Carvalima","day":13},{"carrier":"Dominalog","day":3},{"carrier":"J&T","day":1682},{"carrier":"Jad","day":14},{"carrier":"Loggi","day":10},{"carrier":"iMile Fast","day":16},{"carrier":"iMile Slow","day":16}],"CAMPINAS":[{"carrier":"J&T","day":122},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":208}],"XSP4":[{"carrier":"J&T","day":50},{"carrier":"Loggi","day":1}]},"2026-08-01":{"ARENA":[{"carrier":"J&T","day":310},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":1}],"BRSP02":[{"carrier":"J&T","day":12}],"BRSP04":[{"carrier":"J&T","day":23}],"BRSP14":[{"carrier":"J&T","day":29}],"BRXGO1":[{"carrier":"J&T","day":25}],"BRXSP10":[{"carrier":"J&T","day":499},{"carrier":"Loggi","day":2}],"BRXSP5":[{"carrier":"J&T","day":146}],"BRXSP9":[{"carrier":"Carvalima","day":3},{"carrier":"J&T","day":1861},{"carrier":"Jad","day":5},{"carrier":"Loggi","day":9},{"carrier":"iMile Fast","day":10},{"carrier":"iMile Slow","day":34}],"CAMPINAS":[{"carrier":"J&T","day":128},{"carrier":"Jad","day":1}],"XMG1":[{"carrier":"J&T","day":174}],"XSP4":[{"carrier":"J&T","day":40},{"carrier":"Loggi","day":1}]},"2026-08-03":{"ARENA":[{"carrier":"J&T","day":2}],"BRSP14":[{"carrier":"J&T","day":1}],"BRXSP10":[{"carrier":"J&T","day":5}],"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"Dominalog","day":2},{"carrier":"J&T","day":751},{"carrier":"Jad","day":7},{"carrier":"Loggi","day":6},{"carrier":"iMile Fast","day":2},{"carrier":"iMile Slow","day":4}]},"2026-08-04":{"ARENA":[{"carrier":"J&T","day":16},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1}],"BRSP14":[{"carrier":"J&T","day":1}],"BRXGO1":[{"carrier":"J&T","day":35}],"BRXSP10":[{"carrier":"J&T","day":590},{"carrier":"Loggi","day":5}],"BRXSP5":[{"carrier":"J&T","day":3}],"BRXSP9":[{"carrier":"Carvalima","day":4},{"carrier":"J&T","day":96},{"carrier":"Jad","day":1},{"carrier":"iMile Fast","day":5},{"carrier":"iMile Slow","day":1}],"CAMPINAS":[{"carrier":"J&T","day":119},{"carrier":"Jad","day":5},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":66}],"XSP4":[{"carrier":"J&T","day":14}]},"2026-08-05":{"ARENA":[{"carrier":"J&T","day":107}],"BRSP04":[{"carrier":"J&T","day":2}],"BRXGO1":[{"carrier":"J&T","day":4}],"BRXSP10":[{"carrier":"J&T","day":536},{"carrier":"Loggi","day":1}],"BRXSP5":[{"carrier":"J&T","day":74}],"BRXSP9":[{"carrier":"J&T","day":263},{"carrier":"Jad","day":6},{"carrier":"Loggi","day":2},{"carrier":"iMile Fast","day":5}],"CAMPINAS":[{"carrier":"J&T","day":2},{"carrier":"Loggi","day":1}],"XMG1":[{"carrier":"J&T","day":33}],"XSP4":[{"carrier":"J&T","day":6}]},"2026-08-06":{"ARENA":[{"carrier":"J&T","day":9},{"carrier":"Loggi","day":1}],"BRXGO1":[{"carrier":"J&T","day":40}],"BRXSP10":[{"carrier":"J&T","day":2}],"BRXSP5":[{"carrier":"J&T","day":2}],"BRXSP9":[{"carrier":"J&T","day":28},{"carrier":"Jad","day":8},{"carrier":"Loggi","day":2},{"carrier":"iMile Fast","day":1}],"CAMPINAS":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":23}]},"2026-08-07":{"ARENA":[{"carrier":"J&T","day":8}],"BRXGO1":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"Dominalog","day":1},{"carrier":"J&T","day":17},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":4},{"carrier":"iMile Fast","day":3}]},"2026-08-08":{"BRXSP5":[{"carrier":"J&T","day":2}],"BRXSP9":[{"carrier":"Dominalog","day":4},{"carrier":"J&T","day":20},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1},{"carrier":"iMile Fast","day":6},{"carrier":"iMile Slow","day":1}],"CAMPINAS":[{"carrier":"J&T","day":1}],"XSP4":[{"carrier":"J&T","day":1}]},"2026-08-10":{"BRXSP9":[{"carrier":"Carvalima","day":2},{"carrier":"J&T","day":90},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":2},{"carrier":"iMile Fast","day":3},{"carrier":"iMile Slow","day":2}]},"2026-08-11":{"ARENA":[{"carrier":"Loggi","day":2}],"BRXGO1":[{"carrier":"J&T","day":1}],"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP5":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"Carvalima","day":2},{"carrier":"Dominalog","day":1},{"carrier":"J&T","day":1},{"carrier":"iMile Fast","day":7}],"CAMPINAS":[{"carrier":"J&T","day":1}],"XMG1":[{"carrier":"J&T","day":1}]},"2026-08-12":{"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP5":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"Carvalima","day":2},{"carrier":"J&T","day":20},{"carrier":"Jad","day":2},{"carrier":"Loggi","day":1},{"carrier":"iMile Fast","day":12}]},"2026-08-13":{"BRXGO1":[{"carrier":"J&T","day":1}],"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"Carvalima","day":2},{"carrier":"J&T","day":11},{"carrier":"Jad","day":7},{"carrier":"Loggi","day":10},{"carrier":"iMile Fast","day":2}]},"2026-08-14":{"BRXSP9":[{"carrier":"Dominalog","day":1},{"carrier":"J&T","day":2},{"carrier":"iMile Fast","day":2},{"carrier":"iMile Slow","day":1}],"XSP4":[{"carrier":"J&T","day":1}]},"2026-08-15":{"BRXSP9":[{"carrier":"Dominalog","day":1},{"carrier":"J&T","day":4},{"carrier":"Jad","day":2},{"carrier":"iMile Fast","day":1}]},"2026-08-17":{"BRXSP9":[{"carrier":"J&T","day":4}]},"2026-08-18":{"ARENA":[{"carrier":"Loggi","day":1}],"BRXGO1":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"J&T","day":1},{"carrier":"iMile Fast","day":8}],"CAMPINAS":[{"carrier":"J&T","day":3},{"carrier":"Jad","day":1}]},"2026-08-19":{"ARENA":[{"carrier":"J&T","day":2}],"BRXSP9":[{"carrier":"Carvalima","day":2},{"carrier":"J&T","day":2},{"carrier":"iMile Fast","day":1}],"CAMPINAS":[{"carrier":"Loggi","day":1}]},"2026-08-20":{"ARENA":[{"carrier":"J&T","day":1}],"BRXGO1":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"J&T","day":5},{"carrier":"Loggi","day":2}]},"2026-08-21":{"BRXSP9":[{"carrier":"J&T","day":1},{"carrier":"Jad","day":1},{"carrier":"Loggi","day":1},{"carrier":"iMile Fast","day":1}]},"2026-08-22":{"ARENA":[{"carrier":"J&T","day":1}],"BRXSP5":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"J&T","day":6}]},"2026-08-24":{"BRXSP9":[{"carrier":"J&T","day":2}]},"2026-08-25":{"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"iMile Slow","day":1}],"CAMPINAS":[{"carrier":"J&T","day":2}],"XMG1":[{"carrier":"J&T","day":1}]},"2026-08-26":{"ARENA":[{"carrier":"J&T","day":2}],"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"J&T","day":4},{"carrier":"iMile Fast","day":1},{"carrier":"iMile Slow","day":1}],"XMG1":[{"carrier":"J&T","day":1}],"XSP4":[{"carrier":"J&T","day":1},{"carrier":"Loggi","day":1}]},"2026-08-27":{"BRXSP9":[{"carrier":"Jad","day":1}],"CAMPINAS":[{"carrier":"J&T","day":1}]},"2026-08-28":{"BRXSP9":[{"carrier":"J&T","day":1},{"carrier":"iMile Fast","day":2}]},"2026-08-29":{"BRXSP9":[{"carrier":"J&T","day":1},{"carrier":"iMile Fast","day":1},{"carrier":"iMile Slow","day":1}]},"2026-09-02":{"BRXSP9":[{"carrier":"J&T","day":1}],"CAMPINAS":[{"carrier":"J&T","day":1}]},"2026-09-03":{"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP5":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"J&T","day":1}]},"2026-09-04":{"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"J&T","day":2}]},"2026-09-05":{"BRXSP10":[{"carrier":"Loggi","day":1}],"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"J&T","day":1},{"carrier":"iMile Fast","day":1}]},"2026-09-07":{"BRXSP9":[{"carrier":"J&T","day":6}]},"2026-09-08":{"BRXSP10":[{"carrier":"J&T","day":2}],"BRXSP9":[{"carrier":"Loggi","day":1}]},"2026-09-09":{"BRXSP9":[{"carrier":"J&T","day":2},{"carrier":"iMile Fast","day":2}],"CAMPINAS":[{"carrier":"J&T","day":2}],"XSP4":[{"carrier":"J&T","day":2}]},"2026-09-10":{"BRXSP10":[{"carrier":"J&T","day":6}],"BRXSP5":[{"carrier":"J&T","day":2}],"BRXSP9":[{"carrier":"J&T","day":8},{"carrier":"iMile Fast","day":1}]},"2026-09-11":{"BRXSP10":[{"carrier":"J&T","day":3}],"BRXSP9":[{"carrier":"J&T","day":3}]},"2026-09-12":{"BRXSP10":[{"carrier":"J&T","day":1}],"BRXSP9":[{"carrier":"J&T","day":1}]},"2026-09-14":{"BRXSP9":[{"carrier":"J&T","day":3},{"carrier":"Jad","day":1},{"carrier":"iMile Fast","day":1}]},"2026-09-15":{"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"J&T","day":10},{"carrier":"iMile Fast","day":1}],"CAMPINAS":[{"carrier":"J&T","day":1}]},"2026-09-16":{"BRXSP9":[{"carrier":"J&T","day":1},{"carrier":"Loggi","day":3}]},"2026-10-27":{"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"J&T","day":2}]},"2026-10-28":{"BRXSP9":[{"carrier":"Loggi","day":1}]},"2026-11-03":{"BRXSP9":[{"carrier":"Carvalima","day":1},{"carrier":"J&T","day":4},{"carrier":"iMile Fast","day":1}]},"2026-12-01":{"BRTR01":[{"carrier":"Jad","day":1}]}};
+  const FRIENDLY_NAMES = {"BRXSP9": "Sortation Center Anhanguera", "BRXSP10": "Guarulhos 2", "ARENA": "Arena - Barueri", "BRSP14": "FBM Cajamar", "XMG1": "Belo Horizonte", "CAMPINAS": "Campinas", "BRXGO1": "Goiânia", "BRSP04": "FBM Cajamar", "BRXSP5": "Ribeirão Preto", "BRSP02": "FBM Cajamar", "XSP4": "São Bernardo do Campo", "BRBA01": "FBM Lauro de Freitas", "BRBA02": "FBM Simões Filho", "Outras": "Demais origens (agregado)"};
+
+  // Feriados nacionais BR 2026 (fixos + moveis calculados) + feriado estadual SP (explica picos ex: BRXSP9 09/07)
+  const NATIONAL_HOLIDAYS_2026 = {
+    '2026-01-01': 'Confraternização Universal',
+    '2026-02-16': 'Carnaval',
+    '2026-02-17': 'Carnaval',
+    '2026-04-03': 'Sexta-feira Santa',
+    '2026-04-21': 'Tiradentes',
+    '2026-05-01': 'Dia do Trabalho',
+    '2026-06-04': 'Corpus Christi',
+    '2026-09-07': 'Independência do Brasil',
+    '2026-10-12': 'Nossa Senhora Aparecida',
+    '2026-11-02': 'Finados',
+    '2026-11-15': 'Proclamação da República',
+    '2026-11-20': 'Consciência Negra',
+    '2026-12-25': 'Natal'
+  };
+  const STATE_HOLIDAYS_2026 = {
+    SP: { '2026-07-09': 'Revolução Constitucionalista (feriado estadual SP)' }
+  };
+  const FACILITY_STATE = {
+    BRXSP9:'SP', BRXSP10:'SP', BRXSP5:'SP', XSP4:'SP', BRSP14:'SP', BRSP02:'SP', BRSP04:'SP', CAMPINAS:'SP', ARENA:'SP',
+    XMG1:'MG', BRXGO1:'GO', BRBA01:'BA', BRBA02:'BA'
+  };
+  function getHolidayInfo(dateStr, org) {
+    if (NATIONAL_HOLIDAYS_2026[dateStr]) return NATIONAL_HOLIDAYS_2026[dateStr];
+    const state = FACILITY_STATE[org];
+    if (state && STATE_HOLIDAYS_2026[state] && STATE_HOLIDAYS_2026[state][dateStr]) return STATE_HOLIDAYS_2026[state][dateStr];
+    return null;
+  }
+
+  const ACTION_PLAN_ITEMS = [
+    'Antecipar a coleta do dia anterior ao feriado (D-1), reduzindo o volume parado durante o feriado.',
+    'Negociar com as transportadoras uma operação parcial ou reforçada no feriado para CDs com fluxo crítico.',
+    'Redistribuir o volume represado ao longo dos 2 dias seguintes ao feriado, evitando gargalo concentrado no D+1.',
+    'Reforçar turno e mão de obra no dia seguinte ao feriado (maior concentração de pacotes parados).',
+    'Comunicar previsão de atraso de SLA a sellers e compradores potencialmente afetados.',
+    'Monitorar o backlog diariamente na semana do feriado para acionar o plano de contingência com antecedência.'
+  ];
+
+  const PACKAGES_PER_PALLET = 108; // 12 pacotes/camada x 9 camadas (base 120x100cm, pacote 40x25x20cm)
+  const PALLETS_PER_TRUCK = 14;
+  const PALLETS_PER_CARRETA = 28;
+
+  // ============================================================
+  // MODO "PLANILHA VIVA": cole aqui a URL publicada em CSV de uma
+  // planilha Google Sheets conectada ao BigQuery (Connected Sheets),
+  // com o schema: facility,data,carrier,volume (mesma query do dashboard).
+  // Arquivo > Compartilhar > Publicar na Web > formato CSV.
+  // Deixe em branco ('') para usar os dados fixos embutidos abaixo.
+  // ============================================================
+  const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQoaI1XIVblJI8N-QhombAJAaqCLtmf4J1DZq9exmcu8mFkoJNQAIx-Udi8E1uudjBPl9Ps4oFwXpEk/pub?gid=582069458&single=true&output=csv';
+
+  let REAL_DATA = REAL_DATA_STATIC;
+
+  function parseCSVLine(line) {
+    const out = []; let cur = ''; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQuotes = !inQuotes; }
+      else if (c === ',' && !inQuotes) { out.push(cur); cur = ''; }
+      else { cur += c; }
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  }
+
+  function parseCSVToRealData(csvText) {
+    const lines = csvText.trim().split(/\r?\n/);
+    if (lines.length < 2) return null;
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+    const iFacility = header.indexOf('facility');
+    const iData = header.indexOf('data');
+    const iCarrier = header.indexOf('carrier');
+    const iVolume = header.indexOf('volume');
+    if (iFacility < 0 || iData < 0 || iCarrier < 0 || iVolume < 0) return null;
+    const result = {};
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i]) continue;
+      const cols = parseCSVLine(lines[i]);
+      const facility = cols[iFacility], date = cols[iData], carrier = cols[iCarrier];
+      const volume = parseInt(cols[iVolume], 10) || 0;
+      if (!facility || !date) continue;
+      if (!result[date]) result[date] = {};
+      if (!result[date][facility]) result[date][facility] = [];
+      result[date][facility].push({ carrier, day: volume });
+    }
+    return result;
+  }
+
+  async function loadRemoteDataIfConfigured() {
+    if (!SHEET_CSV_URL) return false;
+    try {
+      const res = await fetch(SHEET_CSV_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      const parsed = parseCSVToRealData(text);
+      if (parsed && Object.keys(parsed).length > 0) {
+        REAL_DATA = parsed;
+        console.log('Dados carregados da planilha viva.');
+        return true;
+      } else {
+        console.warn('CSV da planilha veio vazio ou com colunas inesperadas; usando dados fixos.');
+        return false;
+      }
+    } catch (err) {
+      console.warn('Falha ao buscar planilha viva, usando dados fixos embutidos:', err);
+      return false;
+    }
+  }
+
+  const DAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const WEEKDAY_FULL = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  let productivity = {};
+  let pctsTurno = {};
+  let picoInfo = null;
+  let holidayFlags = {};
+  let holidaysInRange = [];
+  let volumeDeviationPct = 0;
+
+  function onDeviationChange(v) {
+    const n = parseFloat(String(v).replace(',', '.'));
+    volumeDeviationPct = isFinite(n) ? n : 0;
+    renderAll();
+  }
+  function withDeviation(v) { return volumeDeviationPct ? v * (1 + volumeDeviationPct / 100) : v; }
+  function devAnnot(v) {
+    if (!volumeDeviationPct) return '';
+    return `<div class="dev-annot">(${volumeDeviationPct > 0 ? '+' : ''}${volumeDeviationPct}%: ${fmt(Math.round(withDeviation(v)))})</div>`;
+  }
+  let sortState = { key: 'total', dir: 'desc' };
+  let lastData = null, lastOrigins = null;
+
+  let ALL_CARRIERS = [], ALL_ORIGINS = [];
+  let filters = { carrier: new Set(), origin: new Set() };
+
+  function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function fmtDate(dateStr) { const [y,m,d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
+
+  async function initPage() {
+    const usedLive = await loadRemoteDataIfConfigured();
+    const dates = Object.keys(REAL_DATA).sort();
+    document.getElementById('dateStart').value = dates[0];
+    document.getElementById('dateEnd').value = dates[dates.length - 1];
+    document.getElementById('lastLoad').textContent = new Date().toLocaleString('pt-BR');
+    document.getElementById('dataUntil').textContent = fmtDate(dates[dates.length - 1]) + ' (inclui previsão)';
+    document.getElementById('dataSourceBadge').innerHTML = usedLive ? '📡 Dados: planilha viva (Sheets/BigQuery)' : '📊 Dados: fixos embutidos no arquivo';
+
+    const origins = new Set(), carriers = new Set();
+    Object.values(REAL_DATA).forEach(day => Object.entries(day).forEach(([org, entries]) => {
+      origins.add(org);
+      entries.forEach(e => carriers.add(e.carrier));
+    }));
+    ALL_ORIGINS = Array.from(origins).sort();
+    ALL_CARRIERS = Array.from(carriers).sort();
+    filters.carrier = new Set(ALL_CARRIERS);
+    filters.origin = new Set(ALL_ORIGINS);
+
+    initDropdown('carrier', ALL_CARRIERS, o => o);
+    initDropdown('origin', ALL_ORIGINS, o => FRIENDLY_NAMES[o] ? `${o} — ${FRIENDLY_NAMES[o]}` : o);
+    updateFilterLabel('carrier', ALL_CARRIERS.length);
+    updateFilterLabel('origin', ALL_ORIGINS.length);
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-dropdown')) {
+        document.getElementById('carrierMenu').style.display = 'none';
+        document.getElementById('originMenu').style.display = 'none';
+      }
+      if (!e.target.closest('.visitor-badge') && !e.target.closest('.visitor-panel')) {
+        document.getElementById('visitorPanel').classList.remove('open');
+      }
+    });
+
+    applyFilters();
+    initVisitorTracking();
+  }
+
+  // ============================================================
+  // Contador/lista de acessos via Grid.state (window.GRID injetado
+  // automaticamente quando o arquivo é aberto hospedado no Grid).
+  // Fora do Grid (ex: arquivo local), a funcionalidade fica indisponível.
+  // ============================================================
+  async function initVisitorTracking() {
+    const badge = document.getElementById('visitorCount');
+    const registerBox = document.querySelector('.visitor-register');
+    if (!window.GRID || !window.GRID.state) {
+      badge.textContent = '—';
+      document.getElementById('visitorList').innerHTML = '<div class="visitor-empty">Disponível apenas quando aberto pelo link do Grid.</div>';
+      if (registerBox) registerBox.style.display = 'none';
+      return;
+    }
+    try {
+      // Contagem automática: incrementa a cada abertura, sem depender de nome/e-mail.
+      const { state } = await window.GRID.state.get();
+      const totalViews = ((state && state.totalViews) || 0) + 1;
+      const visitors = (state && state.visitors) || [];
+      await window.GRID.state.patch({ totalViews });
+      renderVisitorList(visitors, totalViews);
+    } catch (err) {
+      console.warn('Não foi possível registrar/ler o contador de acessos do Grid:', err);
+      badge.textContent = '—';
+    }
+  }
+
+  function renderVisitorList(visitors, totalViews) {
+    if (typeof totalViews === 'number') document.getElementById('visitorCount').textContent = totalViews;
+    const list = document.getElementById('visitorList');
+    if (!visitors.length) { list.innerHTML = '<div class="visitor-empty">Ninguém se identificou ainda (registro é opcional — a contagem acima já é automática).</div>'; return; }
+    const sorted = [...visitors].sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+    list.innerHTML = sorted.slice(0, 20).map(v => `<div class="visitor-item"><span>${v.name || 'Anônimo'}</span><span>${v.ts ? new Date(v.ts).toLocaleDateString('pt-BR') : ''}</span></div>`).join('');
+  }
+
+  function toggleVisitorPanel() {
+    document.getElementById('visitorPanel').classList.toggle('open');
+  }
+
+  async function registerVisit() {
+    if (!window.GRID || !window.GRID.state) return;
+    const nameInput = document.getElementById('visitorNameInput');
+    const name = nameInput.value.trim() || 'Anônimo';
+    try {
+      const { state } = await window.GRID.state.get();
+      const visitors = (state && state.visitors) || [];
+      visitors.push({ name, ts: new Date().toISOString() });
+      const res = await window.GRID.state.patch({ visitors });
+      const totalViews = (res.state && res.state.totalViews) || (state && state.totalViews);
+      renderVisitorList((res.state && res.state.visitors) || visitors, totalViews);
+      nameInput.value = '';
+    } catch (err) {
+      console.warn('Falha ao registrar visita:', err);
+    }
+  }
+
+  // ============================================================
+  // Detalhe por origem: concentração por transportador + cálculo
+  // de frota (carretas/trucks) com base em pacotes/palete.
+  // ============================================================
+  function openOriginDetail(org) {
+    const dStart = document.getElementById('dateStart').value;
+    const dEnd = document.getElementById('dateEnd').value;
+    const carrierTotals = {};
+    let total = 0;
+    Object.keys(REAL_DATA).filter(d => d >= dStart && d <= dEnd).forEach(dateStr => {
+      const entries = REAL_DATA[dateStr][org];
+      if (!entries) return;
+      entries.forEach(e => {
+        if (!filters.carrier.has(e.carrier)) return;
+        carrierTotals[e.carrier] = (carrierTotals[e.carrier] || 0) + e.day;
+        total += e.day;
+      });
+    });
+    const sorted = Object.entries(carrierTotals).sort((a,b) => b[1]-a[1]);
+    const max = sorted.length ? sorted[0][1] : 1;
+
+    document.getElementById('originPanelTitle').textContent = `${org}${FRIENDLY_NAMES[org] ? ' — ' + FRIENDLY_NAMES[org] : ''}`;
+    document.getElementById('originPanelSub').textContent = `Concentração por transportadora · ${fmtDate(dStart)} a ${fmtDate(dEnd)} · Total: ${fmt(total)} pacotes`;
+
+    let bars = '';
+    sorted.forEach(([carrier, vol]) => {
+      const pct = Math.round((vol / max) * 100);
+      const share = total > 0 ? ((vol/total)*100).toFixed(1) : '0.0';
+      bars += `<div class="carrier-bar-row">
+        <div class="carrier-bar-label">${carrier}</div>
+        <div class="carrier-bar-track"><div class="carrier-bar-fill" style="width:${pct}%"></div></div>
+        <div class="carrier-bar-val">${fmt(vol)} (${share}%)</div>
+      </div>`;
+    });
+    document.getElementById('originCarrierBars').innerHTML = bars || '<div style="font-size:11px;color:#999;">Sem volume no período/filtros selecionados.</div>';
+
+    const pallets = Math.ceil(total / PACKAGES_PER_PALLET);
+    const nCarretas = Math.floor(pallets / PALLETS_PER_CARRETA);
+    const restPallets = pallets - nCarretas * PALLETS_PER_CARRETA;
+    const nTrucks = restPallets > 0 ? Math.ceil(restPallets / PALLETS_PER_TRUCK) : 0;
+
+    document.getElementById('fleetSummary').innerHTML = `
+      <b>📦 ${fmt(total)} pacotes</b> ÷ ${PACKAGES_PER_PALLET} pacotes/palete ≈ <b>${fmt(pallets)} paletes</b><br>
+      Alocação sugerida: <b>${nCarretas} carreta(s)</b> (${PALLETS_PER_CARRETA} paletes cada)${nTrucks > 0 ? ` + <b>${nTrucks} truck(s)</b> (${PALLETS_PER_TRUCK} paletes cada) para o restante` : ' — sem sobra para truck'}.
+    `;
+
+    document.getElementById('fleetDiagrams').innerHTML =
+      fleetDiagramSVG('Truck', PALLETS_PER_TRUCK, 7, nTrucks) +
+      fleetDiagramSVG('Carreta', PALLETS_PER_CARRETA, 14, nCarretas);
+
+    document.getElementById('originOverlay').classList.add('open');
+  }
+  function closeOriginDetail() { document.getElementById('originOverlay').classList.remove('open'); }
+
+  function fleetDiagramSVG(label, palletCount, cols, qty) {
+    const rows = Math.ceil(palletCount / cols);
+    let cells = '';
+    let n = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (n >= palletCount) break;
+        cells += `<rect x="${20 + c*24}" y="${20 + r*30}" width="20" height="24" rx="2" fill="#dce8ff" stroke="#0055cc" stroke-width="1"/>`;
+        n++;
+      }
+    }
+    const w = 20 + cols*24 + 10;
+    const h = 20 + rows*30 + 10;
+    return `<div>
+      <svg width="${Math.min(w,260)}" height="${h}" viewBox="0 0 ${w} ${h}">
+        <rect x="2" y="2" width="${w-4}" height="${h-4}" rx="8" fill="none" stroke="#1a2d5c" stroke-width="2"/>
+        ${cells}
+      </svg>
+      <div class="fleet-diagram-label">${label} (${palletCount} paletes) × ${qty}</div>
+    </div>`;
+  }
+
+  // ============================================================
+  // Resumo por e-mail (mailto) com feriados, plano de ação, pico
+  // e Prod/Turno + MOD por origem já informados.
+  // ============================================================
+  function buildSummaryText() {
+    const dStart = document.getElementById('dateStart').value;
+    const dEnd = document.getElementById('dateEnd').value;
+    let lines = [];
+    lines.push(`Resumo Volume por Origem — ${fmtDate(dStart)} a ${fmtDate(dEnd)}`);
+    lines.push('');
+    if (holidaysInRange.length) {
+      lines.push('FERIADOS NO PERÍODO:');
+      [...holidaysInRange].sort((a,b)=>a.date.localeCompare(b.date)).forEach(h => {
+        lines.push(`- ${fmtDate(h.date)} (${WEEKDAY_FULL[new Date(h.date+'T00:00:00').getDay()]}): ${h.label} — origens: ${h.orgs.join(', ')}`);
+      });
+      lines.push('Plano de ação sugerido:');
+      ACTION_PLAN_ITEMS.forEach(i => lines.push(`  * ${i}`));
+      lines.push('');
+    }
+    if (picoInfo && picoInfo.date) {
+      lines.push(`Pico do período: ${fmt(picoInfo.val)} pacotes em ${picoInfo.org} (${fmtDate(picoInfo.date)})`);
+      lines.push('');
+    }
+    lines.push('PROD/TURNO E MOD POR ORIGEM (informados):');
+    let any = false;
+    Object.keys(lastData || {}).forEach(org => {
+      const prod = parseFloat(productivity[org]) || 0;
+      if (prod > 0) {
+        any = true;
+        const total = lastData[org].days.reduce((a,b)=>a+b,0);
+        const media = Math.round(total/6);
+        const pico = Math.max(...lastData[org].days);
+        const modM = Math.round(media/prod), modP = Math.round(pico/prod);
+        lines.push(`- ${org}: Prod/Turno ${fmt(prod)} · MOD(Média) ${fmt(modM)} · MOD(Pico) ${fmt(modP)}`);
+      }
+    });
+    if (!any) lines.push('(nenhuma produtividade/turno informada ainda)');
+    return lines.join('\n');
+  }
+
+  function sendSummaryEmail() {
+    const body = buildSummaryText();
+    const subject = 'Resumo Volume por Origem - Coleta';
+    // Gmail compose direto no navegador (mailto: depende de cliente de e-mail
+    // configurado como padrão no Windows, o que normalmente não está setado).
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const win = window.open(gmailUrl, '_blank');
+    if (!win) {
+      // Pop-up bloqueado: cai para mailto como último recurso
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+  }
+
+  function initDropdown(type, options, labelFn) {
+    const list = document.getElementById(type + 'OptionsList');
+    list.innerHTML = options.map(opt => `
+      <label class="dropdown-item" data-search="${(labelFn(opt)).toLowerCase()}">
+        <input type="checkbox" checked onchange="toggleFilterOption('${type}', '${opt}')">
+        <span>${labelFn(opt)}</span>
+      </label>`).join('');
+  }
+
+  function toggleDropdown(type) {
+    const menu = document.getElementById(type + 'Menu');
+    const isOpen = menu.style.display === 'block';
+    document.getElementById('carrierMenu').style.display = 'none';
+    document.getElementById('originMenu').style.display = 'none';
+    menu.style.display = isOpen ? 'none' : 'block';
+  }
+
+  function filterDropdownOptions(type, query) {
+    query = query.toLowerCase();
+    document.querySelectorAll('#' + type + 'OptionsList .dropdown-item').forEach(item => {
+      item.style.display = item.getAttribute('data-search').includes(query) ? 'flex' : 'none';
+    });
+  }
+
+  function toggleFilterOption(type, value) {
+    if (filters[type].has(value)) filters[type].delete(value); else filters[type].add(value);
+    const total = type === 'carrier' ? ALL_CARRIERS.length : ALL_ORIGINS.length;
+    updateFilterLabel(type, total);
+    applyFilters();
+  }
+
+  function selectAllFilter(type) {
+    const all = type === 'carrier' ? ALL_CARRIERS : ALL_ORIGINS;
+    filters[type] = new Set(all);
+    document.querySelectorAll('#' + type + 'OptionsList input[type=checkbox]').forEach(cb => cb.checked = true);
+    updateFilterLabel(type, all.length);
+    applyFilters();
+  }
+
+  function clearFilterSel(type) {
+    filters[type] = new Set();
+    document.querySelectorAll('#' + type + 'OptionsList input[type=checkbox]').forEach(cb => cb.checked = false);
+    updateFilterLabel(type, (type === 'carrier' ? ALL_CARRIERS : ALL_ORIGINS).length);
+    applyFilters();
+  }
+
+  function updateFilterLabel(type, total) {
+    const n = filters[type].size;
+    const label = document.getElementById(type + 'Label');
+    if (n === total) label.textContent = 'Todas';
+    else if (n === 0) label.textContent = 'Nenhuma';
+    else if (n === 1) label.textContent = Array.from(filters[type])[0];
+    else label.textContent = `${n} selecionadas`;
+  }
+
+  function getFilteredData() {
+    const dStart = document.getElementById('dateStart').value;
+    const dEnd = document.getElementById('dateEnd').value;
+
+    const dates = Object.keys(REAL_DATA).filter(d => d >= dStart && d <= dEnd).sort();
+    const data = {};
+    const dayVolumes = { 0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {} };
+    holidayFlags = {};
+    holidaysInRange = [];
+
+    dates.forEach(dateStr => {
+      const d = new Date(dateStr + 'T00:00:00');
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek >= 1 && dayOfWeek <= 6) {
+        const dayIdx = dayOfWeek - 1;
+        Object.entries(REAL_DATA[dateStr]).forEach(([org, entries]) => {
+          if (!filters.origin.has(org)) return;
+          const matching = entries.filter(e => filters.carrier.has(e.carrier));
+          if (matching.length === 0) return;
+          const vol = matching.reduce((s, e) => s + e.day, 0);
+          if (!data[org]) data[org] = { days: [0,0,0,0,0,0] };
+          if (!dayVolumes[dayIdx][org]) dayVolumes[dayIdx][org] = [];
+          dayVolumes[dayIdx][org].push(vol);
+          const holidayLabel = getHolidayInfo(dateStr, org);
+          if (holidayLabel) {
+            if (!holidayFlags[org]) holidayFlags[org] = {};
+            if (!holidayFlags[org][dayIdx]) holidayFlags[org][dayIdx] = [];
+            holidayFlags[org][dayIdx].push({ date: dateStr, label: holidayLabel });
+            let existing = holidaysInRange.find(h => h.date === dateStr && h.label === holidayLabel);
+            if (!existing) { existing = { date: dateStr, label: holidayLabel, orgs: [] }; holidaysInRange.push(existing); }
+            if (!existing.orgs.includes(org)) existing.orgs.push(org);
+          }
+        });
+      }
+    });
+
+    for (let dayIdx = 0; dayIdx < 6; dayIdx++) {
+      Object.entries(dayVolumes[dayIdx]).forEach(([org, vals]) => {
+        data[org].days[dayIdx] = Math.round(vals.reduce((a,b)=>a+b, 0) / vals.length);
+      });
+    }
+
+    return data;
+  }
+
+  function computePico(dStart, dEnd) {
+    let best = { val: -1, date: null, org: null };
+    Object.keys(REAL_DATA).filter(d => d >= dStart && d <= dEnd).forEach(dateStr => {
+      Object.entries(REAL_DATA[dateStr]).forEach(([org, entries]) => {
+        if (!filters.origin.has(org)) return;
+        const matching = entries.filter(e => filters.carrier.has(e.carrier));
+        if (!matching.length) return;
+        const vol = matching.reduce((s,e)=>s+e.day, 0);
+        if (vol > best.val) best = { val: vol, date: dateStr, org };
+      });
+    });
+    return best;
+  }
+
+  function sortOrigins(origins, data, key, dir) {
+    const sorted = [...origins].sort((a, b) => {
+      let va, vb;
+      if (key === 'total') { va = data[a].days.reduce((x,y)=>x+y,0); vb = data[b].days.reduce((x,y)=>x+y,0); }
+      else { va = data[a].days[key]; vb = data[b].days[key]; }
+      return dir === 'desc' ? vb - va : va - vb;
+    });
+    return sorted;
+  }
+
+  function sortByDay(dayIdx) {
+    if (sortState.key === dayIdx) sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
+    else sortState = { key: dayIdx, dir: 'desc' };
+    renderAll();
+  }
+
+  function applyFilters() {
+    const dStart = document.getElementById('dateStart').value;
+    const dEnd = document.getElementById('dateEnd').value;
+    lastData = getFilteredData();
+    lastOrigins = Object.keys(lastData);
+    picoInfo = computePico(dStart, dEnd);
+    renderAll();
+    renderHolidayAlert();
+  }
+
+  function renderHolidayAlert() {
+    const box = document.getElementById('holidayAlertBox');
+    if (!holidaysInRange.length) { box.innerHTML = ''; return; }
+    const sorted = [...holidaysInRange].sort((a,b) => a.date.localeCompare(b.date));
+    const parts = sorted.map(h => `${fmtDate(h.date)} (${WEEKDAY_FULL[new Date(h.date+'T00:00:00').getDay()]}) — ${h.label}`);
+    box.innerHTML = `<div class="holiday-alert">🎉 Feriado no período: ${parts.join(' · ')}. Volume pode concentrar nos dias adjacentes.<button onclick="openHolidayModal()">Ver plano de ação</button></div>`;
+  }
+
+  function openHolidayModal() {
+    const sorted = [...holidaysInRange].sort((a,b) => a.date.localeCompare(b.date));
+    document.getElementById('holidaySubtitle').innerHTML = sorted.map(h =>
+      `<b>${fmtDate(h.date)} (${WEEKDAY_FULL[new Date(h.date+'T00:00:00').getDay()]})</b> — ${h.label}. Origens afetadas: ${h.orgs.join(', ')}`
+    ).join('<br>');
+    document.getElementById('holidayPlanList').innerHTML = ACTION_PLAN_ITEMS.map(i => `<li>${i}</li>`).join('');
+    document.getElementById('holidayModalOverlay').classList.add('open');
+  }
+  function closeHolidayModal() { document.getElementById('holidayModalOverlay').classList.remove('open'); }
+
+  function renderAll() {
+    const data = lastData, origins = sortOrigins(lastOrigins, lastData, sortState.key, sortState.dir);
+    const allVals = Object.values(data).flatMap(d => d.days).filter(v => v > 0);
+
+    const totOrigins = [...lastOrigins].sort((a,b) => data[b].days.reduce((x,y)=>x+y,0) - data[a].days.reduce((x,y)=>x+y,0));
+
+    let cards = `
+      <div class="card"><div class="card-label"><span class="card-emoji">🏭</span>Origens</div><div class="card-value">${lastOrigins.length}</div></div>
+      <div class="card"><div class="card-label"><span class="card-emoji">📊</span>Média Diária</div><div class="card-value">${fmt(Object.values(data).reduce((s, o) => s + o.days.reduce((a,b)=>a+b,0) / 6, 0))}</div></div>
+      <div class="card clickable" onclick="showPico()"><div class="card-label"><span class="card-emoji">🔥</span>Pico</div><div class="card-value">${picoInfo && picoInfo.val >= 0 ? fmt(picoInfo.val) : '—'}</div><div class="card-sub">${picoInfo && picoInfo.date ? WEEKDAY_FULL[new Date(picoInfo.date+'T00:00:00').getDay()] + ', ' + fmtDate(picoInfo.date) : ''}</div></div>
+      <div class="card"><div class="card-label"><span class="card-emoji">🏆</span>Maior</div><div class="card-value" style="font-size:18px;">${totOrigins.length > 0 ? totOrigins[0] : '—'}</div></div>
+    `;
+    document.getElementById('cardsGrid').innerHTML = cards;
+
+    let table = `<tr><th class="sortable ${sortState.key==='total'?sortState.dir:''}" onclick="sortByDay('total')">Origem</th>`;
+    DAYS.forEach((d,i) => table += `<th class="sortable ${sortState.key===i?sortState.dir:''}" onclick="sortByDay(${i})">${d}</th>`);
+    table += '<th>Dom</th><th>Total</th><th>Média diária</th><th>Pico</th><th>Prod/Turno</th><th>MOD (Média)</th><th>MOD (Pico)</th><th>Pcts/Turno</th><th>Turnos (Pico)</th></tr>';
+
+    const totals = [0,0,0,0,0,0];
+    let sumProd = 0, sumModM = 0, sumModP = 0, sumPcts = 0;
+    origins.forEach(org => {
+      const total = data[org].days.reduce((a,b)=>a+b,0);
+      const media = Math.round(total / 6);
+      const pico = Math.max(...data[org].days);
+      // Base de cálculo: valor ajustado pelo Desvio de Volume (%) quando preenchido; senão, valor original.
+      const basisMedia = volumeDeviationPct ? withDeviation(media) : media;
+      const basisPico = volumeDeviationPct ? withDeviation(pico) : pico;
+      const prod = parseFloat(productivity[org]) || 0;
+      const modM = prod > 0 ? Math.round(basisMedia / prod) : '—';
+      const modP = prod > 0 ? Math.round(basisPico / prod) : '—';
+      const pcts = parseFloat(pctsTurno[org]) || 0;
+      const tInfo = turnosInfo(basisPico, pcts);
+      const pctsPlaceholder = Math.max(1, Math.round(basisPico / 3));
+      const friendly = FRIENDLY_NAMES[org] || '';
+
+      table += `<tr><td class="origin-cell"><span class="origin-code" onclick="openOriginDetail('${org}')">${org}</span>${friendly ? `<span class="origin-name">${friendly}</span>` : ''}</td>`;
+      data[org].days.forEach((d, i) => {
+        totals[i] += d;
+        const col = getColor(d, allVals);
+        const hList = (holidayFlags[org] && holidayFlags[org][i]) || null;
+        const hFlag = hList ? `<span class="holiday-flag" title="${hList.map(h=>fmtDate(h.date)+': '+h.label).join(' | ')}" onclick="openHolidayModal()">🎉</span>` : '';
+        table += `<td>${d > 0 ? `<div class="cell-color ${col}">${fmt(d)}${hFlag}</div>${devAnnot(d)}` : '<span class="c-empty">—</span>'}</td>`;
+      });
+      table += `<td><span class="c-empty">—</span></td>`;
+      table += `<td><b>${fmt(total)}</b>${devAnnot(total)}</td><td>${fmt(media)}${devAnnot(media)}</td><td>${fmt(pico)}${devAnnot(pico)}</td>`;
+      table += `<td><input type="text" class="prod-input" inputmode="numeric" placeholder="500" value="${productivity[org] ? fmt(productivity[org]) : ''}" onchange="setProd('${org}', this.value)" style="text-align:right;"></td>`;
+      table += `<td style="background:#e8f0ff;color:#0055cc;font-weight:600;">${modM === '—' ? modM : fmt(modM)}</td>`;
+      table += `<td style="background:#e8f0ff;color:#0055cc;font-weight:600;">${modP === '—' ? modP : fmt(modP)}</td>`;
+      table += `<td><input type="text" class="prod-input" inputmode="numeric" placeholder="${fmt(pctsPlaceholder)}" value="${pctsTurno[org] ? fmt(pctsTurno[org]) : ''}" onchange="setPctsTurno('${org}', this.value)" style="text-align:right;"></td>`;
+      table += `<td><span class="turno-badge ${tInfo.cls}">${tInfo.text}</span></td></tr>`;
+
+      sumProd += prod;
+      if (modM !== '—') sumModM += modM;
+      if (modP !== '—') sumModP += modP;
+      sumPcts += pcts;
+    });
+
+    let gt = 0;
+    table += '<tr class="total-row"><td class="origin-cell"><span class="origin-code">Total</span></td>';
+    totals.forEach(t => { gt += t; table += `<td>${fmt(t)}${devAnnot(t)}</td>`; });
+    table += `<td>—</td><td>${fmt(gt)}${devAnnot(gt)}</td><td>—</td><td>—</td>`;
+    table += `<td style="background:#dce8ff;color:#0055cc;font-weight:700;">${fmt(sumProd)}</td>`;
+    table += `<td style="background:#dce8ff;color:#0055cc;font-weight:700;">${fmt(sumModM)}</td>`;
+    table += `<td style="background:#dce8ff;color:#0055cc;font-weight:700;">${fmt(sumModP)}</td>`;
+    table += `<td style="background:#dce8ff;color:#0055cc;font-weight:700;">${fmt(sumPcts)}</td>`;
+    table += `<td>—</td></tr>`;
+
+    document.getElementById('heatmapTable').innerHTML = table;
+  }
+
+  function getColor(v, all) { if (!v || !all.length) return ''; const max = Math.max(...all), min = Math.min(...all.filter(x=>x>0)), r = (v-min)/(max-min||1); return v===max?'c-6':r>=0.8?'c-5':r>=0.6?'c-4':r>=0.4?'c-3':r>=0.2?'c-2':'c-1'; }
+  function setProd(o, v) { productivity[o] = v.replace(/\D/g, ''); renderAll(); }
+  function setPctsTurno(o, v) { pctsTurno[o] = v.replace(/\D/g, ''); renderAll(); }
+
+  // Turnos necessários = pico do período ÷ Pcts/Turno, arredondado pra cima.
+  // Máximo operacional = 3 turnos normais; um 4º "turno" só é viável como hora extra;
+  // acima de 4 está fora da capacidade com a config atual.
+  function turnosInfo(pico, pcts) {
+    if (!pcts || pcts <= 0) return { text: '—', cls: '' };
+    const n = Math.ceil(pico / pcts);
+    if (n <= 0) return { text: '0', cls: 'turno-ok' };
+    if (n <= 3) return { text: `${n} turno${n > 1 ? 's' : ''}`, cls: 'turno-ok' };
+    if (n === 4) return { text: '3 + HE', cls: 'turno-he' };
+    return { text: `⚠ ${n} turnos`, cls: 'turno-over' };
+  }
+
+  function showPico() {
+    if (!picoInfo || !picoInfo.date) return;
+    const dateStr = picoInfo.date;
+    const entries = Object.entries(REAL_DATA[dateStr] || {}).map(([org, list]) => {
+      if (!filters.origin.has(org)) return [org, 0];
+      const matching = list.filter(e => filters.carrier.has(e.carrier));
+      return [org, matching.reduce((s,e)=>s+e.day, 0)];
+    }).filter(([,vol]) => vol > 0).sort((a,b) => b[1]-a[1]);
+
+    const d = new Date(dateStr + 'T00:00:00');
+    document.getElementById('picoTitle').innerHTML = `${WEEKDAY_FULL[d.getDay()]}, ${fmtDate(dateStr)}`;
+    document.getElementById('picoSubtitle').innerHTML = `Ranking de volume por origem nesse dia`;
+    let html = '';
+    entries.forEach(([org, vol], i) => {
+      html += `<div class="modal-card"><div class="modal-label">#${i+1}</div><div class="modal-value">${fmt(vol)}</div><div class="modal-origin">${org}</div></div>`;
+    });
+    document.getElementById('picoGrid').innerHTML = html;
+    document.getElementById('picoModalOverlay').classList.add('open');
+  }
+  function closePicoModal() { document.getElementById('picoModalOverlay').classList.remove('open'); }
+
+  function exportCSV() {
+    const data = lastData, origins = sortOrigins(lastOrigins, lastData, sortState.key, sortState.dir);
+    let csv = 'Origem;Nome;' + DAYS.join(';') + ';Total;Media Diaria;Pico\n';
+    origins.forEach(org => {
+      const total = data[org].days.reduce((a,b)=>a+b,0);
+      const media = Math.round(total/6);
+      const pico = Math.max(...data[org].days);
+      csv += `${org};${FRIENDLY_NAMES[org]||''};${data[org].days.join(';')};${total};${media};${pico}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'heatmap_volume_coleta.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  initPage();
+</script>
+<script>
+/* Grid: only allow approved Grid domains to open unsandboxed tabs */
+(function(){
+  var allowedHosts = ["figma.com", "www.figma.com", "furydocs.io", "zeroheight.com", "google.com", "docs.google.com", "meet.google.com", "grid.adminml.com", "grid-artifacts.adminml.com", "mercadolibre.atlassian.net", "mercadolibre-opsgenie.atlassian.net", "app.datadoghq.com", "grafana-service.furycloud.io", "web.furycloud.io", "nasdaq-meli.app.opsgenie.com", "meli.enterprise.slack.com"];
+  var allowedSuffixes = [".adminml.com", ".atlassian.net", ".google.com", ".furycloud.io", ".melioffice.com", ".melisystems.com"];
+  var allowedPathPrefixes = {"github.com": ["/melisource/"], "www.github.com": ["/melisource/"]};
+  function normalizeUrl(rawUrl){
+    try {
+      return new URL(String(rawUrl || ""), window.location.href);
+    } catch (_err) {
+      return null;
+    }
+  }
+  function isAllowedUrl(rawUrl){
+    var parsed = normalizeUrl(rawUrl);
+    if(!parsed) return false;
+    if(parsed.protocol === "slack:") return true;
+    if(parsed.protocol !== "https:") return false;
+    var h = (parsed.hostname || "").toLowerCase();
+    if(!h) return false;
+    if(allowedHosts.indexOf(h) !== -1) return true;
+    for(var i = 0; i < allowedSuffixes.length; i++){
+      var s = allowedSuffixes[i];
+      if(h === s.slice(1) || (h.length > s.length && h.slice(-s.length) === s)) return true;
+    }
+    var pathPrefixes = allowedPathPrefixes[h];
+    if(pathPrefixes){
+      var p = parsed.pathname || "/";
+      for(var j = 0; j < pathPrefixes.length; j++){
+        if(p.slice(0, pathPrefixes[j].length) === pathPrefixes[j]) return true;
+      }
+    }
+    return false;
+  }
+  function requestParentPopup(rawUrl){
+    var parsed = normalizeUrl(rawUrl);
+    if(!parsed || !window.parent || window.parent === window) return false;
+    try {
+      window.parent.postMessage({type: "grid-open-safe-popup", url: parsed.href}, window.location.origin);
+      return true;
+    } catch (_err) {
+      return false;
+    }
+  }
+
+  document.addEventListener("click", function(event){
+    var target = event.target;
+    var anchor = target && target.closest ? target.closest("a[href]") : null;
+    if(!anchor) return;
+    var href = anchor.getAttribute("href") || "";
+    if(!href || href.charAt(0) === "#") return;
+    var opensNewTab = anchor.target === "_blank" || event.ctrlKey || event.metaKey || event.button === 1;
+    if(!opensNewTab) return;
+    if(!isAllowedUrl(href)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if(requestParentPopup(href)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+
+  var nativeOpen = window.open;
+  window.open = function(rawUrl, target, features){
+    if(!isAllowedUrl(rawUrl)) return null;
+    if(requestParentPopup(rawUrl)) return null;
+    return nativeOpen ? nativeOpen.call(window, normalizeUrl(rawUrl).href, target, features) : null;
+  };
+})();
+</script>
+<script>
+/* Grid: sync iframe URL mutations to parent address bar */
+(function(){
+  function notifyParent(search, hash){
+    if(!window.parent || window.parent === window) return;
+    try{
+      window.parent.postMessage(
+        {type:"grid-url-sync", search:search, hash:hash},
+        window.location.origin
+      );
+    }catch(_){}
+  }
+  function parseAndNotify(url){
+    try{
+      var p = new URL(String(url), window.location.href);
+      notifyParent(p.search, p.hash);
+    }catch(_){}
+  }
+  var _push = history.pushState.bind(history);
+  var _replace = history.replaceState.bind(history);
+  history.pushState = function(state, title, url){
+    _push(state, title, url);
+    if(url != null) parseAndNotify(url);
+  };
+  history.replaceState = function(state, title, url){
+    _replace(state, title, url);
+    if(url != null) parseAndNotify(url);
+  };
+  window.addEventListener("hashchange", function(){
+    notifyParent(window.location.search, window.location.hash);
+  });
+})();
+</script>
+</body>
+</html>
