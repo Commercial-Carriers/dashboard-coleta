@@ -428,7 +428,16 @@ const SHEET_CSV_URL = './base.csv';
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i]) continue;
       const cols = parseCSVLine(lines[i]);
-      const facility = cols[iFacility], date = cols[iData], carrier = cols[iCarrier];
+      const facility = cols[iFacility];
+let date = cols[iData];
+const carrier = cols[iCarrier];
+
+if (date && date.includes('/')) {
+  const [dia, mes, ano] = date.split('/');
+  date = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+} else if (date) {
+  date = date.substring(0, 10);
+}
       const volume = parseInt(cols[iVolume], 10) || 0;
       if (!facility || !date) continue;
       if (!result[date]) result[date] = {};
