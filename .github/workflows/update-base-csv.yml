@@ -1,9 +1,9 @@
 name: Atualizar base.csv
 
 on:
-  schedule:
-- cron: '0 13 * * *'
   workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * *"
 
 permissions:
   contents: write
@@ -20,10 +20,20 @@ jobs:
         run: |
           curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vQoaI1XIVblJI8N-QhombAJAaqCLtmf4J1DZq9exmcu8mFkoJNQAIx-Udi8E1uudjBPl9Ps4oFwXpEk/pub?gid=582069458&single=true&output=csv" -o base.csv
 
+      - name: Validar arquivo baixado
+        run: |
+          echo "Primeiras linhas do base.csv:"
+          head -n 5 base.csv
+          test -s base.csv
+
       - name: Commit se houver alteração
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add base.csv
-          git diff --cached --quiet || git commit -m "Atualiza base.csv automaticamente"
-          git push
+          if git diff --cached --quiet; then
+            echo "Sem alterações no base.csv"
+          else
+            git commit -m "Atualiza base.csv automaticamente"
+            git push
+          fi
