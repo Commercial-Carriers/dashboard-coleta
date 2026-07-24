@@ -30,10 +30,13 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
           git add base.csv
+
           if git diff --cached --quiet; then
             echo "Sem alterações no base.csv"
           else
             git commit -m "Atualiza base.csv automaticamente"
-            git push
+            git pull --rebase origin main
+            git push origin main
           fi
