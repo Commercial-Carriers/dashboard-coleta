@@ -3,13 +3,13 @@ name: Atualizar base.csv
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 13 * * *"
+    - cron: "30 14 * * *"
 
 permissions:
   contents: write
 
 jobs:
-  update-csv:
+  atualizacao-csv:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,31 +17,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Baixar CSV do Google Sheets
-  run: |
-    curl -L "https://docs.google.com/spreadsheets/d/1kRrGyoe9nSf1-UpJuCG4p905ygYadOTJ3y9yTquXKi8/export?format=csv&gid=582069458" -o base.csv
-
-    if grep -qi "<!DOCTYPE html\|<html" base.csv; then
-      echo "Erro: o arquivo baixado não é CSV, é HTML."
-      exit 1
-    fi
-
-      - name: Validar arquivo baixado
         run: |
-          echo "Primeiras linhas do base.csv:"
-          head -n 5 base.csv
-          test -s base.csv
+          curl -L "https://docs.google.com/spreadsheets/d/1kRrGyoe9nSf1-UpJuCG4p905ygYadOTJ3y9yTquXKi8/export?format=csv&gid=582069458" -o base.csv
 
-      - name: Commit se houver alteração
+          if grep -qi "<!DOCTYPE html\|<html" base.csv; then
+            echo "Erro: o arquivo baixado não é CSV, é HTML."
+            exit 1
+          fi
+
+      - name: Configurar Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
+      - name: Commit e push se houver alteração
+        run: |
           git add base.csv
-
-          if git diff --cached --quiet; then
-            echo "Sem alterações no base.csv"
-          else
-            git commit -m "Atualiza base.csv automaticamente"
-            git pull --rebase origin main
-            git push origin main
-          fi
+          git diff --cached --quiet || git commit -m "Atualiza base.csv automaticamente"
+          git push
