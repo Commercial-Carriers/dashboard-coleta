@@ -16,9 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Baixar CSV do Grid
+      - name: Baixar CSV publicado do Google Sheets
         run: |
-          curl -L "https://grid.adminml.com/d/01KYM81BM1N8XSX48NCQRGXG09/view" -o base.csv
+          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vQoaI1XIVblJI8N-QhombAJAaqCLtmf4J1DZq9exmcu8mFkoJNQAIx-Udi8E1uudjBPl9Ps4oFwXpEk/pub?gid=582069458&single=true&output=csv" -o base.csv
 
           if grep -qi "<!DOCTYPE html\|<html" base.csv; then
             echo "Erro: o arquivo baixado não é CSV, é HTML."
