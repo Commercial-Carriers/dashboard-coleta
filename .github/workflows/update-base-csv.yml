@@ -16,9 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Baixar CSV publicado do Google Sheets
-        run: |
-          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vQoaI1XIVblJI8N-QhombAJAaqCLtmf4J1DZq9exmcu8mFkoJNQAIx-Udi8E1uudjBPl9Ps4oFwXpEk/pub?gid=582069458&single=true&output=csv" -o base.csv
+      - name: Baixar CSV do Google Sheets
+  run: |
+    curl -L "https://docs.google.com/spreadsheets/d/1kRrGyoe9nSf1-UpJuCG4p905ygYadOTJ3y9yTquXKi8/export?format=csv&gid=582069458" -o base.csv
+
+    if grep -qi "<!DOCTYPE html\|<html" base.csv; then
+      echo "Erro: o arquivo baixado não é CSV, é HTML."
+      exit 1
+    fi
 
       - name: Validar arquivo baixado
         run: |
