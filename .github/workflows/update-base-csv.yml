@@ -1,37 +1,28 @@
 name: Atualizar base.csv
-
 on:
   workflow_dispatch:
   schedule:
     - cron: "30 14 * * *"
-
 permissions:
   contents: write
-
 jobs:
   atualizacao-csv:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Baixar CSV publicado do Google Sheets
         run: |
-          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vQoaI1XIVblJI8N-QhombAJAaqCLtmf4J1DZq9exmcu8mFkoJNQAIx-Udi8E1uudjBPl9Ps4oFwXpEk/pub?gid=582069458&single=true&output=csv" -o base.csv
-
+          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vSNBQcryHcopJA6GOx4DXlaM5JMIJ6p3RCD9tjMQ0PYksmcD9nAUnHubpaeldO2wDOA-M0mTvQ_Rz4a/pub?gid=211322686&single=true&output=csv" -o base.csv
           if grep -qi "<!DOCTYPE html\|<html" base.csv; then
             echo "Erro: o arquivo baixado não é CSV, é HTML."
             exit 1
           fi
-
           head -n 1 base.csv
-
       - name: Configurar Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
       - name: Commit e push se houver alteração
         run: |
           git add base.csv
