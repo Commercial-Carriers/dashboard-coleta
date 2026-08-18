@@ -42,12 +42,14 @@ snap = {
     "recs": [[r[0],r[1],r[2],(r[3]-min_date).days,r[4]] for r in recs]
 }
 
-with open('index.html', encoding='utf-8') as f:
+# Usa dashboard_mo.htm como base (tem o menu MO x Certronic)
+with open('dashboard_mo.htm', encoding='utf-8') as f:
     content = f.read()
 
 new_snap = 'const SNAP=' + json.dumps(snap, separators=(',',':')) + ';'
 content = re.sub(r'const SNAP=\{.*?\};', new_snap, content, flags=re.DOTALL)
 
+# Salva como index.html
 with open('index.html', 'w', encoding='utf-8') as f:
     f.write(content)
 
