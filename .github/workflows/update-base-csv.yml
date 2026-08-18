@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Baixar CSV publicado do Google Sheets
+      - name: Baixar dados via Apps Script
         run: |
-          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vSNBQcryHcopJA6GOx4DXlaM5JMIJ6p3RCD9tjMQ0PYksmcD9nAUnHubpaeldO2wDOA-M0mTvQ_Rz4a/pub?gid=211322686&single=true&output=csv" -o base.csv
+          curl -L "https://script.google.com/a/macros/mercadolivre.com/s/AKfycbzWtXeeWuy9VmQ9hh7XbYhfe8p7mLK8UFHx1RO2dzskyLGcmlB6zXV8oX17AvJS8PMZ1w/exec" -o base.csv
           if grep -qi "<!DOCTYPE html\|<html" base.csv; then
             echo "Erro: o arquivo baixado não é CSV, é HTML."
             exit 1
