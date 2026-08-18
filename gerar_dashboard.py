@@ -1,0 +1,54 @@
+import csv, json, re
+from datetime import datetime
+
+origins_list, carriers_list, typs_list = [], [], []
+origins_idx, carriers_idx, typs_idx = {}, {}, {}
+recs = []
+min_date = max_date = None
+
+with open('base.csv', encoding='utf-8-sig') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        try:
+            origin  = str(row['LAST_STEP_ORIGIN_ID']).strip()
+            typ     = str(row['SHP_TYPOLOGY']).strip().upper()
+            carrier = str(row['DIC_SERVICE_ID']).strip()
+            dt_str  = str(row['DT_PREVISTA_COLETA']).strip()
+            vol     = int(float(str(row['CTD_SHIPMENT_ID']).strip()))
+            dt = datetime.strptime(dt_str, '%d/%m/%Y').date()
+            if origin not in origins_idx:
+                origins_idx[origin] = len(origins_list)
+                origins_list.append(origin)
+            if carrier not in carriers_idx:
+                carriers_idx[carrier] = len(carriers_list)
+                carriers_list.append(carrier)
+            if typ not in typs_idx:
+                typs_idx[typ] = len(typs_list)
+                typs_list.append(typ)
+            if min_date is None or dt < min_date:
+                min_date = dt
+            if max_date is None or dt > max_date:
+                max_date = dt
+            recs.append([origins_idx[origin], typs_idx[typ], carriers_idx[carrier], dt, vol])
+        except:
+            continue
+
+snap = {
+    "origins": origins_list,
+    "carriers": carriers_list,
+    "typs": typs_list,
+    "min": min_date.isoformat(),
+    "max": max_date.isoformat(),
+    "recs": [[r[0],r[1],r[2],(r[3]-min_date).days,r[4]] for r in recs]
+}
+
+with open('index.html', encoding='utf-8') as f:
+    content = f.read()
+
+new_snap = 'const SNAP=' + json.dumps(snap, separators=(',',':')) + ';'
+content = re.sub(r'const SNAP=\{.*?\};', new_snap, content, flags=re.DOTALL)
+
+with open('index.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print("Dashboard atualizado: {} registros, {} a {}".format(len(recs), min_date, max_date))
