@@ -43,7 +43,7 @@ snap = {
 }
 
 # Usa dashboard_mo.htm como base (tem o menu MO x Certronic)
-with open('dashboard_mo.htm', encoding='utf-8') as f:
+with open('dashboard_mo_7.htm', encoding='utf-8') as f:
     content = f.read()
 
 new_snap = 'const SNAP=' + json.dumps(snap, separators=(',',':')) + ';'
